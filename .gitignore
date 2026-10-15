@@ -1,0 +1,47 @@
+# Python / Virtual Environment
+venv/
+env/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+db.sqlite3
+
+# Environment Variables & Secrets
+.env
+local_settings.py
+
+# Node & Frontend
+node_modules/
+finor-maps-app/node_modules/
+finor-maps-app/dist/
+finor-maps-app/dist-ssr/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Android Builds & Binaries
+*.apk
+*.aab
+finor-maps-app/android/.gradle/
+finor-maps-app/android/build/
+finor-maps-app/android/app/build/
+finor-maps-app/android/local.properties
+finor-maps-app/android/.idea/
+finor-maps-app/android/captures/
+finor-maps-app/android/.externalNativeBuild/
+finor-maps-app/android/.cxx/
+finor-maps-app/android/app/src/main/assets/public/
+finor-maps-app/android/app/src/main/assets/capacitor.config.json
+finor-maps-app/android/app/src/main/assets/capacitor.plugins.json
+
+# IDEs & System files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+*.log
+scratch/

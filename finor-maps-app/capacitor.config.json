@@ -1,0 +1,9 @@
+{
+  "appId": "com.finor.maps",
+  "appName": "FINOR Maps",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  }
+}
