@@ -1,0 +1,29 @@
+{% extends "leaflet/admin/widget.html" %}
+
+{% block callback %}
+    var campusCenter = L.latLng(options.djoptions.center);
+    var campusBounds = L.latLngBounds(options.djoptions.extent);
+    var savedPoint = null;
+
+    try {
+        var savedGeometry = JSON.parse(document.getElementById('{{ id_css }}').value);
+        if (savedGeometry.type === 'Point' && savedGeometry.coordinates.length >= 2) {
+            savedPoint = L.latLng(savedGeometry.coordinates[1], savedGeometry.coordinates[0]);
+        }
+    } catch (error) {
+        // Un nodo nuevo todavía no tiene geometría guardada.
+    }
+
+    if (savedPoint && campusBounds.contains(savedPoint)) {
+        map.setView(savedPoint, options.djoptions.zoom);
+    } else {
+        map.setView(campusCenter, options.djoptions.zoom);
+    }
+
+    if (savedPoint && !campusBounds.contains(savedPoint)) {
+        var warning = document.createElement('p');
+        warning.className = 'help';
+        warning.textContent = 'El punto guardado está fuera del área de FINOR. Dibuja un marcador nuevo sobre el campus para reemplazarlo antes de guardar.';
+        map.getContainer().insertAdjacentElement('afterend', warning);
+    }
+{% endblock callback %}

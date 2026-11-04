@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 # Cargar variables de entorno del archivo .env
 load_dotenv()
@@ -24,13 +25,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-q+u8%se7lq79ik8($k20*=32ej6cqx0cxy6tem5_!y-v(qf=7^')
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    raise ImproperlyConfigured('Define SECRET_KEY en el archivo .env antes de iniciar Django.')
+
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if host.strip()]
 
 
 # Application definition
@@ -69,7 +71,13 @@ MIDDLEWARE = [
 ]
 
 # Permitir que la app móvil acceda a la API
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+CORS_ALLOWED_ORIGINS = [
+    origin.strip() for origin in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if origin.strip()
+]
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()
+]
 
 ROOT_URLCONF = 'FINOR_maps.urls'
 
@@ -129,9 +137,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/La_Paz'
 
 USE_I18N = True
 
@@ -141,10 +149,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() == 'true'
 
 # Django REST Framework Configuración Global
 REST_FRAMEWORK = {
@@ -177,7 +192,5 @@ if platform.system() == 'Windows':
 LEAFLET_CONFIG = {
     'DEFAULT_CENTER': (-17.33848, -63.26879),
     'DEFAULT_ZOOM': 18,
-    'TILES': 'http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}',
-    'ATTRIBUTION_PREFIX': 'Google Maps',
 }
 

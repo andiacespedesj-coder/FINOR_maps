@@ -1,8 +1,27 @@
-/* Limpiar estilos por defecto de Vite que rompen el diseño */
+:root {
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  color: #172c42;
+  background: #e9eff5;
+  --finor-navy: #0b3a70;
+  --finor-blue: #1263a5;
+  --finor-blue-dark: #082e59;
+  --finor-pale: #eaf3fb;
+  --finor-page: #f5f8fb;
+  --finor-border: #dce6ef;
+  --finor-muted: #60758a;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
 html, body, #root {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
-  background-color: #f5f5f5;
+  overflow: hidden;
+  font-family: inherit;
+  background-color: #e9eff5;
 }
+
+button, input { font: inherit; }
+button { cursor: pointer; }

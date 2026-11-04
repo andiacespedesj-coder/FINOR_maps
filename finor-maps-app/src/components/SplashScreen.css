@@ -1,0 +1,99 @@
+.splash-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(155deg, #00366a 0%, #062746 65%, #0b1d35 100%);
+  color: #fff;
+  text-align: center;
+}
+
+.splash-screen::before {
+  content: '';
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 50%;
+  transform: translateY(-10px);
+  box-shadow: 0 0 0 52px rgba(255, 255, 255, .025), 0 0 0 104px rgba(255, 255, 255, .018);
+  pointer-events: none;
+}
+
+.splash-content {
+  position: relative;
+  width: min(85%, 330px);
+  animation: splash-appear .6s ease-out both;
+}
+
+.splash-finor-logo {
+  display: block;
+  width: min(62vw, 220px);
+  height: auto;
+  margin: 0 auto;
+  object-fit: contain;
+  border: 8px solid #fff;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .2);
+}
+
+.splash-divider {
+  width: 46px;
+  height: 3px;
+  margin: 34px auto 26px;
+  border-radius: 99px;
+  background: #ea1c24;
+}
+
+.splash-content h1 {
+  margin: 0;
+  font-size: clamp(2rem, 9vw, 2.65rem);
+  font-weight: 800;
+  letter-spacing: -.045em;
+  line-height: 1.1;
+}
+
+.splash-content p {
+  margin: 12px 0 0;
+  color: #c9dceb;
+  font-size: .88rem;
+  font-weight: 500;
+}
+
+.splash-loading {
+  position: absolute;
+  bottom: max(72px, calc(env(safe-area-inset-bottom) + 52px));
+  width: 112px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, .22);
+}
+
+.splash-loading span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  background: #fff;
+  animation: splash-progress 1.25s ease-in-out infinite alternate;
+}
+
+@keyframes splash-appear {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes splash-progress {
+  from { transform: translateX(0); }
+  to { transform: translateX(170px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-content, .splash-loading span { animation: none; }
+}

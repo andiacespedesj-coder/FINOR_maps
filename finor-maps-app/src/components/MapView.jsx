@@ -1,93 +1,229 @@
-import { MapContainer, TileLayer, Popup, GeoJSON, Tooltip, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, Tooltip, Marker, Circle, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useState } from 'react';
-import { fetchAmbientes, fetchModulos } from '../services/api';
+import L from 'leaflet';
+import { useEffect, useState, useCallback } from 'react';
+import { fetchCampusMap, getApiHelpMessage } from '../services/api';
+import { getUserPosition } from '../services/geolocation';
+import { FINOR_BOUNDS, FINOR_CENTER } from '../services/mapCoordinates';
+import { Navigation, Loader2, WifiOff } from 'lucide-react';
 
-// Centro exacto de la FINOR (Ajustado)
-const FINOR_CENTER = [-17.33848, -63.26879]; 
+// Ícono personalizado del usuario con efecto radar pulsante
+const userGpsIcon = L.divIcon({
+  className: 'user-gps-marker',
+  html: `
+    <div class="user-gps-container">
+      <div class="user-gps-pulse"></div>
+      <div class="user-gps-dot"></div>
+    </div>
+  `,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12]
+});
 
-// Límites geográficos (Caja imaginaria que encierra la facultad)
-// Formato: [[SurOeste], [NorEste]]
-const FINOR_BOUNDS = [
-  [-17.3410, -63.2720], 
-  [-17.3350, -63.2650]  
-];
-
-// Helper para forzar recalibración de tamaño de Leaflet en móviles
-const MapResizer = () => {
+// Helper interno para interactuar con la instancia del mapa de Leaflet
+const MapController = ({ userLocation, shouldFlyToUser, onFlyComplete, selectedBuilding, selectedPlace, bottomOverlayFraction }) => {
   const map = useMap();
+
+  // Recalibrar tamaño inicial
   useEffect(() => {
     const timer = setTimeout(() => {
       map.invalidateSize();
+      if (bottomOverlayFraction && !selectedBuilding && !selectedPlace) {
+        map.panBy([0, map.getSize().y * bottomOverlayFraction / 2], { animate: false });
+      }
     }, 250);
     return () => clearTimeout(timer);
-  }, [map]);
+  }, [map, bottomOverlayFraction, selectedBuilding, selectedPlace]);
+
+  const flyToFeature = useCallback((feature) => {
+    if (!feature?.geometry) return;
+    const bounds = L.geoJSON(feature).getBounds();
+    if (!bounds.isValid()) return;
+    if (bottomOverlayFraction) {
+      const zoom = 19;
+      const center = map.unproject(
+        map.project(bounds.getCenter(), zoom).add(L.point(0, map.getSize().y * bottomOverlayFraction / 2)),
+        zoom,
+      );
+      map.flyTo(center, zoom, { duration: 0.8 });
+      return;
+    }
+    map.flyToBounds(bounds, {
+      paddingTopLeft: [35, 35],
+      paddingBottomRight: [35, Math.min(200, map.getSize().y * 0.44)],
+      maxZoom: 19,
+      duration: 0.8,
+    });
+  }, [map, bottomOverlayFraction]);
+
+  // Centrar suavemente en el usuario cuando se solicita
+  useEffect(() => {
+    if (shouldFlyToUser && userLocation) {
+      map.flyTo([userLocation.lat, userLocation.lng], 19, {
+        duration: 1.2,
+        easeLinearity: 0.25
+      });
+      if (onFlyComplete) onFlyComplete();
+    }
+  }, [shouldFlyToUser, userLocation, map, onFlyComplete]);
+
+  useEffect(() => {
+    if (!selectedPlace?.geometry) flyToFeature(selectedBuilding);
+  }, [selectedBuilding, selectedPlace, flyToFeature]);
+
+  useEffect(() => {
+    flyToFeature(selectedPlace);
+  }, [selectedPlace, flyToFeature]);
+
   return null;
 };
 
-const MapView = ({ onModuloSelect, activeCategoryId }) => {
-  const [modulos, setModulos] = useState([]);
-  const [ambientes, setAmbientes] = useState([]);
+const MapView = ({ onBuildingSelect, onPlaceSelect, selectedBuildingId, selectedPlaceId, activeCategoryId, bottomOverlayFraction = 0 }) => {
+  const [buildings, setBuildings] = useState([]);
+  const [places, setPlaces] = useState([]);
+  const [userLocation, setUserLocation] = useState(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [shouldFly, setShouldFly] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [locationError, setLocationError] = useState('');
+  const selectedBuilding = buildings.find((building) => building.id === selectedBuildingId);
+  const selectedPlace = places.find((place) => place.id === selectedPlaceId);
 
+  // Cargar las geometrías publicadas del campus.
   useEffect(() => {
-    fetchModulos().then(data => setModulos(data.features || []));
-    fetchAmbientes().then(data => setAmbientes(data.features || []));
+    let active = true;
+    fetchCampusMap()
+      .then((data) => {
+        if (!active) return;
+        setBuildings(data.edificios?.features || data.modulos || []);
+        setPlaces(data.lugares?.features || data.ambientes || []);
+      })
+      .catch(() => active && setLoadError(getApiHelpMessage()));
+    return () => { active = false; };
+  }, []);
+
+  // Función para obtener ubicación GPS
+  const handleLocateMe = useCallback(async (fly = true) => {
+    setIsLocating(true);
+    setLocationError('');
+    try {
+      const pos = await getUserPosition();
+      setUserLocation(pos);
+      if (fly) setShouldFly(true);
+
+    } catch (err) {
+      console.warn("No se pudo obtener ubicación GPS:", err.message);
+      setLocationError('No se pudo obtener tu ubicación. Revisa el permiso de ubicación del dispositivo.');
+    } finally {
+      setIsLocating(false);
+    }
   }, []);
 
   return (
-    <div style={{ height: '100%', width: '100%' }}>
-      <MapContainer 
-        center={FINOR_CENTER} 
-        zoom={18} 
-        minZoom={17}
+    <div style={{ position: 'relative', height: '100%', width: '100%' }}>
+      <MapContainer
+        center={FINOR_CENTER}
+        zoom={18}
+        minZoom={16}
         maxZoom={22}
         maxBounds={FINOR_BOUNDS}
-        maxBoundsViscosity={1.0} /* Efecto de "muro" rígido al arrastrar */
+        maxBoundsViscosity={0.9}
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
       >
-        <MapResizer />
+        <MapController
+          userLocation={userLocation}
+          shouldFlyToUser={shouldFly}
+          onFlyComplete={() => setShouldFly(false)}
+          selectedBuilding={selectedBuilding}
+          selectedPlace={selectedPlace}
+          bottomOverlayFraction={bottomOverlayFraction}
+        />
+
         <TileLayer
-          attribution='&copy; Google Maps'
-          url="https://mt0.google.com/vt/lyrs=s&hl=es&x={x}&y={y}&z={z}"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxNativeZoom={19}
           maxZoom={22}
         />
-        
-        {modulos.map(modulo => (
-          <GeoJSON 
-            key={`mod-${modulo.id}`} 
-            data={modulo} 
-            style={{ color: '#004aad', weight: 2, fillColor: '#2563eb', fillOpacity: 0.15 }}
-            eventHandlers={{
-              click: () => {
-                if (onModuloSelect) onModuloSelect(modulo);
-              }
-            }}
-          >
-            <Tooltip permanent direction="center" className="modulo-label">
-              {modulo.properties.nombre}
-            </Tooltip>
-          </GeoJSON>
-        ))}
 
-        {/* Filtrado de Ambientes */}
-        {ambientes
-          .filter(ambiente => !activeCategoryId || ambiente.properties.categoria === activeCategoryId)
-          .map(ambiente => (
-          <GeoJSON 
-            key={`amb-${ambiente.id}`} 
-            data={ambiente}
-          >
-            <Popup className="custom-popup">
-              <h3>{ambiente.properties.nombre} ({ambiente.properties.codigo})</h3>
-              <p className="popup-category">{ambiente.properties.categoria_nombre}</p>
-              <p>{ambiente.properties.descripcion}</p>
-              <p><strong>Piso:</strong> {ambiente.properties.piso_nombre}</p>
-            </Popup>
-          </GeoJSON>
-        ))}
+        {/* Polígonos de los Módulos del Campus */}
+        {buildings.map(building => {
+          const isSelected = selectedBuildingId === building.id;
+          // Los edificios publicados resaltan sobre el plano del campus.
+          const polygonStyle = {
+            color: isSelected ? '#073b76' : '#1263a5',
+            weight: isSelected ? 3 : 2,
+            fillColor: isSelected ? '#1c6db2' : '#609bc7',
+            fillOpacity: isSelected ? 0.8 : 0.57
+          };
+
+          return (
+            <GeoJSON
+              key={`building-${building.id}-${isSelected}`}
+              data={building}
+              style={polygonStyle}
+              eventHandlers={{
+                click: () => {
+                  if (onBuildingSelect) onBuildingSelect(building);
+                }
+              }}
+            >
+              <Tooltip permanent direction="center" className="modulo-label">
+                {building.properties.nombre}
+              </Tooltip>
+            </GeoJSON>
+          );
+        })}
+
+        {/* Solo mostrar marcadores de Ambientes cuando hay un filtro activo por categoría */}
+        {activeCategoryId &&
+          places
+            .filter(place => String(place.properties.categoria) === String(activeCategoryId) && place.geometry)
+            .map(place => (
+              <GeoJSON
+                key={`place-${place.id}-${selectedPlaceId === place.id}`}
+                data={place}
+                pointToLayer={(_feature, latlng) => L.circleMarker(latlng, { radius: selectedPlaceId === place.id ? 10 : 7, color: '#fff', weight: 2, fillColor: selectedPlaceId === place.id ? '#073b76' : '#1263a5', fillOpacity: 1 })}
+                eventHandlers={{ click: () => onPlaceSelect?.(place) }}
+              />
+            ))}
+
+        {/* Posición GPS obtenida al pulsar el botón, con su margen de precisión. */}
+        {userLocation && (
+          <>
+            <Circle center={[userLocation.lat, userLocation.lng]} radius={userLocation.accuracy}
+              pathOptions={{ color: '#1976d2', weight: 1, fillColor: '#1976d2', fillOpacity: .12 }} />
+            <Marker position={[userLocation.lat, userLocation.lng]} icon={userGpsIcon} />
+          </>
+        )}
       </MapContainer>
+
+      {(loadError || locationError) && (
+        <div className="map-network-notice" role="status">
+          <WifiOff size={16} />
+          <span>{loadError || locationError}</span>
+        </div>
+      )}
+
+      {userLocation && !locationError && <div className="map-gps-status" role="status">
+        Tu ubicación · precisión aproximada {Math.round(userLocation.accuracy)} m
+      </div>}
+
+      {/* Botón Flotante para Centrar en "Mi Ubicación" */}
+      <button
+        className={`floating-gps-btn ${userLocation ? 'active' : ''}`}
+        onClick={() => handleLocateMe(true)}
+        title="Mi ubicación actual"
+        aria-label="Centrar mapa en mi ubicación"
+        disabled={isLocating}
+      >
+        {isLocating ? (
+          <Loader2 size={24} className="spinning" />
+        ) : (
+          <Navigation size={22} style={{ transform: 'rotate(-45deg)' }} />
+        )}
+      </button>
     </div>
   );
 };

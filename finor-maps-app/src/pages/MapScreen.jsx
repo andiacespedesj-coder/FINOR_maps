@@ -1,143 +1,57 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Building2, ChevronRight, Search, X } from 'lucide-react';
 import MapView from '../components/MapView';
-import { X, Building2, ChevronRight, Search } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import finorLogo from '../assets/finor-logo.png';
+import './MapScreen.css';
 
-const MapScreen = () => {
+export default function MapScreen() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [selectedModulo, setSelectedModulo] = useState(location.state?.selectedModulo || null);
+  const [selectedBuilding, setSelectedBuilding] = useState(location.state?.selectedModulo || null);
+  const activeFilterId = location.state?.filterCategoryId ?? null;
+  const activeFilterName = location.state?.filterCategoryName;
 
-  // Estado del filtro (viene de CategoriesScreen)
-  const [activeFilterId, setActiveFilterId] = useState(location.state?.filterCategoryId || null);
-  const [activeFilterName, setActiveFilterName] = useState(location.state?.filterCategoryName || null);
-
-  useEffect(() => {
-    if (location.state?.selectedModulo) {
-      setSelectedModulo(location.state.selectedModulo);
-    }
-    if (location.state?.filterCategoryId !== undefined) {
-      setActiveFilterId(location.state?.filterCategoryId || null);
-      setActiveFilterName(location.state?.filterCategoryName || null);
-    }
-  }, [location.state]);
-
-  const handleModuloSelect = (modulo) => {
-    setSelectedModulo(modulo);
-  };
-
-  const clearFilter = () => {
-    setActiveFilterId(null);
-    setActiveFilterName(null);
-    // Limpiamos el state del router
-    navigate('.', { replace: true, state: {} });
-  };
-
-  const handleClose = () => {
-    setSelectedModulo(null);
-  };
-
-  const handleVerDetalles = () => {
-    if (selectedModulo) {
-      // Navegaremos a la pantalla de detalles (por crear/pulir luego)
-      navigate(`/detail/${selectedModulo.id}`);
-    }
-  };
+  const building = selectedBuilding?.properties;
 
   return (
-    <div style={{ position: 'relative', height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Cabecera Flotante tipo Glassmorphism */}
-      <header className="app-header">
-        <h1>FINOR Maps</h1>
-        <div className="search-container">
-          <input
-            type="text"
-            placeholder="Buscar aquí"
-            className="search-bar"
-            onClick={() => navigate('/search')}
-            readOnly
-          />
-          <button className="search-btn" onClick={() => navigate('/search')} title="Buscar">
-            <Search size={20} color="#ffffff" strokeWidth={2.2} />
-          </button>
+    <main className="map-screen">
+      <header className="map-top-panel">
+        <div className="map-identity">
+          <img src={finorLogo} alt="Escudo de FINOR" />
+          <div><h1>FINOR Maps</h1><p>Facultad Integral del Norte · Montero</p></div>
         </div>
-
-        {/* Píldora de Filtro Activo integrada limpiamente */}
-        {activeFilterName && (
-          <div className="active-filter-chip">
-            <span className="filter-chip-text">
-              Filtro: <strong>{activeFilterName}</strong>
-            </span>
-            <button onClick={clearFilter} className="filter-chip-close" title="Quitar filtro">
-              <X size={14} />
-            </button>
-          </div>
-        )}
+        <button className="map-search" onClick={() => navigate('/search')} aria-label="Buscar aulas, servicios o carreras">
+          <Search size={21} aria-hidden="true" /><span>¿A dónde quieres ir?</span>
+        </button>
       </header>
 
-      {/* Contenedor del Mapa */}
-      <div style={{ flexGrow: 1, position: 'relative' }}>
-        <MapView onModuloSelect={handleModuloSelect} activeCategoryId={activeFilterId} />
-      </div>
-
-      {/* Bottom Sheet Anclado - Estilo Google Maps */}
-      {selectedModulo && (
-        <div className="bottom-sheet-card" style={{ padding: 0, overflow: 'hidden' }}>
-          <button className="close-btn" onClick={handleClose} style={{ zIndex: 10, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(4px)' }}>
-            <X size={20} />
+      <div className={`map-canvas${building ? ' has-selection' : ''}`}>
+        <MapView
+          onBuildingSelect={setSelectedBuilding}
+          onPlaceSelect={(place) => navigate(`/detail/${place.properties.edificio_id}`, { state: { floorId: place.properties.piso, placeId: place.id } })}
+          selectedBuildingId={selectedBuilding?.id}
+          activeCategoryId={activeFilterId}
+        />
+        {activeFilterId && <button className="map-active-filter" onClick={() => navigate('.', { replace: true, state: null })} aria-label="Quitar filtro de lugares">
+          {activeFilterName || 'Filtro activo'} <X size={16} />
+        </button>}
+        {building && <section className="building-sheet" aria-label={`Edificio ${building.nombre}`}>
+          <div className="sheet-grip" aria-hidden="true" />
+          <button className="sheet-close" onClick={() => setSelectedBuilding(null)} aria-label="Cerrar ficha"><X size={20} /></button>
+          <div className="sheet-summary">
+            {building.fotografia
+              ? <img className="sheet-thumbnail" src={building.fotografia} alt={`Vista de ${building.nombre}`} />
+              : <div className="sheet-thumbnail sheet-placeholder"><Building2 size={32} /></div>}
+            <div className="sheet-copy"><span>EDIFICIO · CAMPUS FINOR</span><h2>{building.nombre}</h2>
+              <p>{building.pisos?.length || 0} {building.pisos?.length === 1 ? 'piso registrado' : 'pisos registrados'}</p>
+            </div>
+          </div>
+          <button className="sheet-primary" onClick={() => navigate(`/detail/${selectedBuilding.id}`)}>
+            Ver pisos y lugares <ChevronRight size={19} />
           </button>
-
-          <div className="sheet-header-image">
-            {selectedModulo.properties.fotografia ? (
-              <img
-                src={selectedModulo.properties.fotografia}
-                alt="Modulo"
-                style={{ width: '100%', height: '220px', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
-              />
-            ) : (
-              <div style={{ width: '100%', height: '220px', background: 'linear-gradient(135deg, #0033a0, #4a90e2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Building2 size={60} color="#fff" />
-              </div>
-            )}
-          </div>
-
-          <div className="sheet-info-container" style={{ padding: '20px' }}>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '1.4rem', color: '#1a1a1a', fontWeight: '800' }}>
-              {selectedModulo.properties.nombre}
-            </h3>
-
-            {/* Badges de Carreras */}
-            {selectedModulo.properties.carreras_nombres && selectedModulo.properties.carreras_nombres.length > 0 && (
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '12px' }}>
-                {selectedModulo.properties.carreras_nombres.map((carrera, idx) => (
-                  <span key={idx} style={{
-                    backgroundColor: '#eaf2fc', color: '#004aad', fontSize: '0.8rem',
-                    padding: '6px 12px', borderRadius: '16px', fontWeight: '600'
-                  }}>
-                    {carrera}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            <p style={{ margin: '0 0 20px 0', fontSize: '0.95rem', color: '#555', lineHeight: '1.5' }}>
-              {selectedModulo.properties.descripcion
-                ? selectedModulo.properties.descripcion
-                : 'Sin descripción disponible.'}
-            </p>
-
-            <button
-              className="sheet-action-btn"
-              onClick={handleVerDetalles}
-              style={{ width: '100%', padding: '14px', fontSize: '1.05rem', borderRadius: '14px', justifyContent: 'center' }}
-            >
-              Ver detalles y pisos <ChevronRight size={20} />
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+        </section>}
+      </div>
+    </main>
   );
-};
-
-export default MapScreen;
+}

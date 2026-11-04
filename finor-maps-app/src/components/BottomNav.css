@@ -1,36 +1,40 @@
 .bottom-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 65px;
-  background-color: #ffffff;
-  border-top: 1px solid #e0e0e0;
-  padding: 0 15px;
-  z-index: 1000;
-  padding-bottom: env(safe-area-inset-bottom);
+  position: relative;
+  z-index: 1100;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  flex: none;
+  min-height: 66px;
+  padding: 4px 8px max(4px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--finor-border);
+  background: #fff;
 }
 
 .nav-item {
+  position: relative;
   display: flex;
+  min-height: 56px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-decoration: none;
-  color: #757575;
-  font-size: 0.7rem;
+  gap: 3px;
+  color: #66798b;
+  font-size: .73rem;
   font-weight: 600;
-  gap: 4px;
-  flex: 1;
+  text-decoration: none;
 }
 
-.nav-item.active {
-  color: #0033a0;
+.nav-item.active { color: var(--finor-blue); }
+.nav-item.active svg { stroke-width: 2.6; }
+.nav-item.active::after {
+  position: absolute;
+  right: 32%;
+  bottom: 0;
+  left: 32%;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--finor-blue);
+  content: '';
 }
 
-.nav-item.active svg {
-  stroke-width: 2.5px;
-}
+.nav-item:focus-visible { outline: 2px solid var(--finor-blue); outline-offset: -3px; }

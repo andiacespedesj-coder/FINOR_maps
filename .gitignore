@@ -10,6 +10,7 @@ db.sqlite3
 
 # Environment Variables & Secrets
 .env
+finor-maps-app/.env.production
 local_settings.py
 
 # Node & Frontend
@@ -45,3 +46,4 @@ finor-maps-app/android/app/src/main/assets/capacitor.plugins.json
 Thumbs.db
 *.log
 scratch/
+media/

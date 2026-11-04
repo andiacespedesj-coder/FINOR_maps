@@ -1,40 +1,52 @@
-import { Phone, Bus, MessageSquare, Info, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Bus, ChevronDown, ChevronRight, Info, MessageSquare, RefreshCcw } from 'lucide-react';
+import { clearApiCache } from '../services/httpClient';
 import './MoreScreen.css';
 
-const moreOptions = [
-  { id: 1, title: 'Directorio de Contactos', subtitle: 'Teléfonos de carreras y emergencias', icon: <Phone />, link: '#' },
-  { id: 2, title: 'Rutas de Transporte', subtitle: 'Micros y trufis que llegan a la FINOR', icon: <Bus />, link: '#' },
-  { id: 3, title: 'Reportar un Problema', subtitle: '¿Falta algún aula o hay un error?', icon: <MessageSquare />, link: '#' },
-  { id: 4, title: 'Acerca de FINOR Maps', subtitle: 'Versión 1.0.0', icon: <Info />, link: '#' },
-];
+export default function MoreScreen() {
+  const navigate = useNavigate();
+  const [aboutOpen, setAboutOpen] = useState(false);
 
-const MoreScreen = () => {
+  const refreshCampusData = () => {
+    clearApiCache();
+    window.location.replace('/');
+  };
+
   return (
-    <div className="more-screen">
-      <header className="more-header">
-        <h2>Más opciones</h2>
-      </header>
+    <main className="more-screen">
+      <header className="more-header"><h1>Más opciones</h1></header>
 
-      <div className="more-list">
-        {moreOptions.map(option => (
-          <div key={option.id} className="more-list-item" onClick={() => console.log('Click en', option.title)}>
-            <div className="more-icon-box">
-              {option.icon}
-            </div>
-            <div className="more-text">
-              <h4>{option.title}</h4>
-              <p>{option.subtitle}</p>
-            </div>
-            <ChevronRight className="more-arrow" size={20} />
-          </div>
-        ))}
-      </div>
-      
-      <div className="more-footer">
-        <p>Desarrollado para la Facultad Integral del Norte UAGRM</p>
-      </div>
-    </div>
+      <section className="more-list" aria-label="Información y opciones">
+        <button className="more-list-item more-transport" onClick={() => navigate('/transport')}>
+          <span className="more-icon-box"><Bus size={22} /></span>
+          <span className="more-text"><strong>Rutas de transporte</strong><small>Líneas y paradas cercanas a la FINOR</small></span>
+          <ChevronRight className="more-arrow" size={20} />
+        </button>
+        <button className="more-list-item more-report" onClick={() => navigate('/report')}>
+          <span className="more-icon-box"><MessageSquare size={22} /></span>
+          <span className="more-text"><strong>Reportar un problema</strong><small>Avísanos si falta un lugar o hay un error</small></span>
+          <ChevronRight className="more-arrow" size={20} />
+        </button>
+
+        <div className="more-list-item more-about">
+          <button className="more-about-trigger" aria-expanded={aboutOpen} onClick={() => setAboutOpen(!aboutOpen)}>
+            <span className="more-icon-box"><Info size={22} /></span>
+            <span className="more-text"><strong>Acerca de FINOR Maps</strong><small>Conoce el proyecto</small></span>
+            <ChevronDown className={aboutOpen ? 'more-arrow is-open' : 'more-arrow'} size={20} />
+          </button>
+          {aboutOpen && <div className="more-about-content">
+            FINOR Maps es un proyecto académico de Ingeniería de Sistemas para explorar los edificios, pisos y ambientes de la Facultad Integral del Norte.
+          </div>}
+        </div>
+
+        <button className="more-list-item more-refresh" onClick={refreshCampusData}>
+          <span className="more-icon-box"><RefreshCcw size={22} /></span>
+          <span className="more-text"><strong>Actualizar datos del campus</strong><small>Vuelve a cargar la información publicada</small></span>
+        </button>
+      </section>
+
+      <footer className="more-footer">Desarrollado para la Facultad Integral del Norte · UAGRM</footer>
+    </main>
   );
-};
-
-export default MoreScreen;
+}

@@ -5,12 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "check:dev": "node scripts/check-dev-server.mjs",
+    "check:route": "node scripts/check-place-route.mjs",
+    "test": "node --test src/services/navigation.test.js src/services/catalogData.test.mjs src/services/photoArrows.test.js",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",
+    "@capacitor/app-launcher": "^8.0.1",
     "@capacitor/cli": "^8.5.2",
     "@capacitor/core": "^8.5.2",
     "@capacitor/geolocation": "^8.2.2",
@@ -22,6 +26,7 @@
     "react-router-dom": "^7.18.4"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",

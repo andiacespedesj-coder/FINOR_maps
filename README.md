@@ -44,8 +44,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Configurar variables de entorno
-cp .env.example .env
-# Editar .env con tus credenciales de PostgreSQL
+cp .env.production.example .env
+# Para desarrollo local: configura DEBUG=True, DB_HOST=localhost,
+# ALLOWED_HOSTS=localhost,127.0.0.1 y tus credenciales de PostgreSQL.
 
 # Ejecutar migraciones
 python manage.py migrate
@@ -60,6 +61,29 @@ cd finor-maps-app
 npm install
 npm run dev
 ```
+
+La estructura y las responsabilidades de cada carpeta se describen en
+[ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Publicación móvil
+
+No se debe incluir una IP privada en el APK. Define `VITE_API_URL` con el dominio HTTPS público de la API antes de ejecutar `npm run build`. La guía completa para publicar backend, frontend y APK está en [DEPLOYMENT.md](DEPLOYMENT.md).
+
+## Modelo de datos v2
+
+El catalogo se reinicio para preparar el mapa oficial de la FINOR. La jerarquia
+fisica es `Campus -> Edificio -> Piso -> Lugar`; un lugar puede ser un aula,
+bano, laboratorio, biblioteca, cafeteria, entrada, cancha, parqueo u otro
+servicio mediante una categoria.
+
+Las aulas no se identifican globalmente por codigo. `Alias de lugar por
+carrera` permite mostrar una misma ubicacion como `S1`, `Semestre 1`, `Aula
+101` u otro nombre propio de cada carrera. Las direcciones de carrera y
+centros internos son lugares fisicos y tambien unidades de carrera con horario
+y responsable.
+
+La navegacion queda preparada con nodos, conexiones y fotos de ruta. Los datos
+reales se registran y validan desde `/admin/` antes de publicarlos en la app.
 
 ---
 Desarrollado para la comunidad universitaria de la FINOR - UAGRM.

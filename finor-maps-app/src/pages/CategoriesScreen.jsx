@@ -1,72 +1,47 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Book, Building2, GraduationCap, Briefcase, DoorOpen, FlaskConical, Library, Mic, Trophy, Info, Utensils, Droplets, CreditCard, HeartPulse, MoreHorizontal } from 'lucide-react';
+import { ChevronRight, LoaderCircle, MapPin } from 'lucide-react';
 import { fetchCategorias } from '../services/api';
+import PlaceIcon from '../components/PlaceIcon';
 import './CategoriesScreen.css';
 
-// Diccionario para mapear el texto que viene de la BD a iconos reales de Lucide
-const IconMap = {
-  'Book': <Book />,
-  'Building2': <Building2 />,
-  'GraduationCap': <GraduationCap />,
-  'Briefcase': <Briefcase />,
-  'DoorOpen': <DoorOpen />,
-  'FlaskConical': <FlaskConical />,
-  'Library': <Library />,
-  'Mic': <Mic />,
-  'Trophy': <Trophy />,
-  'Info': <Info />,
-  'Utensils': <Utensils />,
-  'Droplets': <Droplets />,
-  'CreditCard': <CreditCard />,
-  'HeartPulse': <HeartPulse />,
-  'MoreHorizontal': <MoreHorizontal />
-};
-
-// Colores predefinidos para ir alternando si no vienen de la BD
-const colors = ['#4a90e2', '#50e3c2', '#9013fe', '#f5a623', '#f8e71c', '#d0021b', '#8b572a', '#7ed321'];
-
-const CategoriesScreen = () => {
-  const [categorias, setCategorias] = useState([]);
+export default function CategoriesScreen() {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchCategorias().then(data => {
-      // DRF devuelve resultados paginados por defecto (results)
-      const fetchedCats = data.results || data || [];
-      setCategorias(fetchedCats);
-    });
+    let active = true;
+    fetchCategorias()
+      .then((response) => active && setCategories(response.results || response || []))
+      .catch(() => active && setError('No se pudieron cargar las categorías. Revisa tu conexión.'))
+      .finally(() => active && setLoading(false));
+    return () => { active = false; };
   }, []);
 
   return (
-    <div className="categories-screen">
+    <main className="categories-screen">
       <header className="categories-header">
-        <h2>Categorías</h2>
+        <span>EXPLORA FINOR</span>
+        <h1>Lugares</h1>
+        <p>Elige qué necesitas encontrar en el campus.</p>
       </header>
-      <div className="categories-grid">
-        {categorias.map((cat, index) => {
-          // Si el icono no se encuentra en el mapa, usamos MoreHorizontal por defecto
-          const iconComponent = IconMap[cat.icono] || <MoreHorizontal />;
-          const color = colors[index % colors.length];
-
-          return (
-            <div 
-              key={cat.id || index} 
-              className="category-card"
-              onClick={() => {
-                navigate('/', { state: { filterCategoryId: cat.id, filterCategoryName: cat.nombre } });
-              }}
-            >
-              <div className="icon-circle" style={{ backgroundColor: color }}>
-                {iconComponent}
-              </div>
-              <span>{cat.nombre}</span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+      <section className="categories-content" aria-label="Tipos de lugares">
+        {loading && <p className="categories-state"><LoaderCircle className="spin" size={20} /> Cargando lugares…</p>}
+        {error && <p className="categories-state">{error}</p>}
+        {!loading && !error && categories.length === 0 && <p className="categories-state">Aún no hay categorías publicadas.</p>}
+        {categories.map((category) => <button
+          key={category.id}
+          className="category-row"
+          onClick={() => navigate(`/categories/${category.id}`)}
+        >
+          <span className="category-icon"><PlaceIcon name={category.icono} size={23} /></span>
+          <span className="category-copy"><strong>{category.nombre}</strong><small>Explorar resultados</small></span>
+          <ChevronRight size={20} aria-hidden="true" />
+        </button>)}
+        {!loading && !error && <div className="categories-hint"><MapPin size={19} /><span>También puedes tocar un edificio directamente en el mapa.</span></div>}
+      </section>
+    </main>
   );
-};
-
-export default CategoriesScreen;
+}

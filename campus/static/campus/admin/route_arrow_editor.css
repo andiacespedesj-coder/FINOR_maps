@@ -1,0 +1,13 @@
+#finor-arrow-editor { max-width: 820px; }
+#finor-arrow-editor .help { margin: 0 0 12px; line-height: 1.5; }
+.finor-arrow-surface { position: relative; display: inline-block; width: 100%; max-width: 800px; overflow: hidden; border: 1px solid var(--hairline-color, #bccbd6); border-radius: 10px; background: #172f45; cursor: crosshair; }
+.finor-arrow-surface > img { display: block; width: 100%; height: auto; }
+.finor-arrow-markers { position: absolute; inset: 0; pointer-events: none; }
+.finor-arrow-marker { position: absolute; display: grid; width: 46px; height: 46px; padding: 0; place-items: center; transform: translate(-50%, -50%); border: 2px solid #fff; border-radius: 50%; background: #1263a5; color: #fff; box-shadow: 0 4px 12px #10293d8c; cursor: pointer; pointer-events: auto; }
+.finor-arrow-marker svg { width: 25px; height: 25px; }
+.finor-arrow-marker.direction-izquierda svg { transform: rotate(-90deg); }
+.finor-arrow-marker.direction-derecha svg { transform: rotate(90deg); }
+.finor-arrow-marker.direction-atras svg, .finor-arrow-marker.direction-bajar svg { transform: rotate(180deg); }
+.finor-arrow-marker:focus-visible { outline: 3px solid #69c7fa; outline-offset: 2px; }
+.finor-arrow-selection { margin: 10px 0 0; color: var(--body-fg, #31516a); font-weight: 700; }
+tr.finor-arrow-active { outline: 2px solid #2387c7; outline-offset: -2px; background: color-mix(in srgb, #2387c7 13%, transparent); }
