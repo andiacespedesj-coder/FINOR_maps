@@ -189,5 +189,33 @@ class ParadaTransporteAdmin(LeafletGeoAdmin):
     )
 
 
-admin.site.register((PlanoInterior, FotoLugar, AliasLugarCarrera, UnidadCarrera, Persona,
-                     ResponsableUnidad))
+@admin.register(UnidadCarrera)
+class UnidadCarreraAdmin(admin.ModelAdmin):
+    list_display = ("nombre", "tipo", "carrera", "campus", "lugar", "activo")
+    list_filter = ("tipo", "campus", "carrera", "activo")
+    search_fields = ("nombre", "carrera__nombre", "campus__nombre", "lugar__nombre")
+    list_select_related = ("carrera", "campus", "lugar")
+    fieldsets = (
+        ("Unidad", {"fields": ("nombre", "tipo", "activo")}),
+        ("A quién pertenece", {
+            "fields": ("carrera", "campus"),
+            "description": "Dirección y Centro interno: selecciona Carrera. Decanato y Vicedecanato: selecciona Campus FINOR. Deja vacío el otro campo.",
+        }),
+        ("Atención", {"fields": ("lugar", "horario_atencion")}),
+    )
+
+
+@admin.register(ResponsableUnidad)
+class ResponsableUnidadAdmin(admin.ModelAdmin):
+    list_display = ("persona", "cargo", "unidad", "activo")
+    list_filter = ("cargo", "unidad__tipo", "activo")
+    search_fields = ("persona__nombre_completo", "unidad__nombre")
+    list_select_related = ("unidad", "persona")
+    fieldsets = (
+        ("Persona y cargo", {"fields": ("persona", "cargo", "unidad", "activo"),
+                             "description": "Crea primero la unidad correspondiente. Decano usa Decanato y Vicedecano usa Vicedecanato."}),
+        ("Vigencia", {"fields": ("fecha_inicio", "fecha_fin")}),
+    )
+
+
+admin.site.register((PlanoInterior, FotoLugar, AliasLugarCarrera, Persona))

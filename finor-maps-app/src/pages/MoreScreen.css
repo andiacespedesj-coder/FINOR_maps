@@ -66,6 +66,13 @@
   font-size: .82rem;
   line-height: 1.5;
 }
+.more-authorities-content { display: flex; flex-direction: column; gap: 12px; }
+.more-authorities-content p { margin: 0; }
+.more-authority-item { display: flex; flex-direction: column; gap: 3px; padding: 10px 0; border-bottom: 1px solid var(--finor-border); }
+.more-authority-item:last-child { border-bottom: 0; }
+.more-authority-item > span { color: var(--finor-blue); font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.more-authority-item > strong { color: #233d55; font-size: .88rem; }
+.more-authority-item > small { color: var(--finor-muted); font-size: .76rem; line-height: 1.4; }
 .more-about-trigger:focus-visible, .more-refresh:focus-visible, .more-transport:focus-visible, .more-report:focus-visible { outline: 2px solid var(--finor-blue); outline-offset: 2px; }
 .more-refresh { padding: 14px; }
 .more-refresh:active, .more-transport:active, .more-report:active, .more-about-trigger:active { background: #f5f9fc; }

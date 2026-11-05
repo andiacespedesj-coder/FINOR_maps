@@ -2,7 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .api.catalog import (
-    AliasLugarCarreraViewSet, CarreraViewSet, CategoriaLugarViewSet,
+    AliasLugarCarreraViewSet, AutoridadFacultadViewSet, CarreraViewSet, CategoriaLugarViewSet,
     EdificioViewSet, FotoLugarViewSet,
     LugarViewSet, PersonaViewSet,
     PisoViewSet, PlanoInteriorViewSet, ResponsableUnidadViewSet,
@@ -23,6 +23,7 @@ router.register(r"aliases-lugares", AliasLugarCarreraViewSet)
 router.register(r"unidades-carrera", UnidadCarreraViewSet)
 router.register(r"personas", PersonaViewSet)
 router.register(r"responsables-unidad", ResponsableUnidadViewSet)
+router.register(r"autoridades-facultad", AutoridadFacultadViewSet, basename="autoridad-facultad")
 router.register(r"nodos-navegacion", NodoNavegacionViewSet)
 router.register(r"conexiones-navegacion", ConexionNavegacionViewSet)
 router.register(r"fotos-ruta", FotoRutaViewSet)

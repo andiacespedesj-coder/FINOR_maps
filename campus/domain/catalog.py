@@ -1,5 +1,7 @@
 from django.contrib.gis.db import models
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db.models import Q
 
 # Entidades y relaciones del catálogo físico del campus.
 
@@ -195,9 +197,15 @@ class AliasLugarCarrera(models.Model):
 
 
 class UnidadCarrera(models.Model):
-    TIPO_CHOICES = [("DIRECCION", "Dirección de carrera"), ("CENTRO_INTERNO", "Centro interno")]
-    carrera = models.ForeignKey(Carrera, on_delete=models.CASCADE, related_name="unidades")
-    lugar = models.ForeignKey(Lugar, on_delete=models.PROTECT, related_name="unidades_carrera")
+    TIPO_CHOICES = [
+        ("DIRECCION", "Dirección de carrera"),
+        ("CENTRO_INTERNO", "Centro interno"),
+        ("DECANATO", "Decanato"),
+        ("VICEDECANATO", "Vicedecanato"),
+    ]
+    carrera = models.ForeignKey(Carrera, on_delete=models.CASCADE, related_name="unidades", null=True, blank=True)
+    campus = models.ForeignKey(Campus, on_delete=models.CASCADE, related_name="unidades_facultad", null=True, blank=True)
+    lugar = models.ForeignKey(Lugar, on_delete=models.PROTECT, related_name="unidades_carrera", null=True, blank=True)
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
     nombre = models.CharField(max_length=150)
     horario_atencion = models.TextField(blank=True)
@@ -208,10 +216,32 @@ class UnidadCarrera(models.Model):
         verbose_name_plural = "Unidades de carrera"
         constraints = [
             models.UniqueConstraint(fields=["carrera", "tipo"], name="unidad_unica_por_carrera_y_tipo"),
+            models.UniqueConstraint(
+                fields=["campus", "tipo"],
+                condition=Q(tipo__in=["DECANATO", "VICEDECANATO"]),
+                name="unidad_facultad_unica_por_campus_tipo",
+            ),
         ]
 
     def __str__(self):
         return self.nombre
+
+    def clean(self):
+        super().clean()
+        if self.tipo in ("DECANATO", "VICEDECANATO"):
+            if not self.campus_id:
+                raise ValidationError({"campus": "Selecciona el campus de esta unidad."})
+            if self.carrera_id:
+                raise ValidationError({"carrera": "Decanato y Vicedecanato pertenecen a la facultad, no a una carrera."})
+            if self.lugar_id and self.lugar.piso.edificio.campus_id != self.campus_id:
+                raise ValidationError({"lugar": "La oficina debe pertenecer al mismo campus."})
+        elif self.tipo in ("DIRECCION", "CENTRO_INTERNO"):
+            if not self.carrera_id:
+                raise ValidationError({"carrera": "Selecciona la carrera de esta unidad."})
+            if self.campus_id:
+                raise ValidationError({"campus": "Esta unidad debe vincularse a una carrera."})
+            if not self.lugar_id:
+                raise ValidationError({"lugar": "Selecciona el lugar de esta unidad."})
 
 
 class Persona(models.Model):
@@ -227,7 +257,12 @@ class Persona(models.Model):
 
 
 class ResponsableUnidad(models.Model):
-    CARGO_CHOICES = [("DIRECTOR", "Director(a) de carrera"), ("EJECUTIVO", "Ejecutivo(a) de centro interno")]
+    CARGO_CHOICES = [
+        ("DIRECTOR", "Director(a) de carrera"),
+        ("EJECUTIVO", "Ejecutivo(a) de centro interno"),
+        ("DECANO", "Decano(a)"),
+        ("VICEDECANO", "Vicedecano(a)"),
+    ]
     unidad = models.ForeignKey(UnidadCarrera, on_delete=models.CASCADE, related_name="responsables")
     persona = models.ForeignKey(Persona, on_delete=models.PROTECT, related_name="responsabilidades")
     cargo = models.CharField(max_length=20, choices=CARGO_CHOICES)
@@ -238,6 +273,26 @@ class ResponsableUnidad(models.Model):
     class Meta:
         verbose_name = "Responsable de unidad"
         verbose_name_plural = "Responsables de unidades"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["unidad", "cargo"],
+                condition=Q(activo=True, cargo__in=["DECANO", "VICEDECANO"]),
+                name="responsable_facultad_unico_por_unidad",
+            ),
+        ]
 
     def __str__(self):
-        return f"{self.persona.nombre_completo} - {self.unidad.nombre}"
+        return f"{self.persona.nombre_completo} - {self.get_cargo_display()}"
+
+    def clean(self):
+        super().clean()
+        if not self.unidad_id:
+            raise ValidationError({"unidad": "Selecciona una unidad."})
+        tipos_por_cargo = {
+            "DIRECTOR": "DIRECCION",
+            "EJECUTIVO": "CENTRO_INTERNO",
+            "DECANO": "DECANATO",
+            "VICEDECANO": "VICEDECANATO",
+        }
+        if self.cargo in tipos_por_cargo and self.unidad.tipo != tipos_por_cargo[self.cargo]:
+            raise ValidationError({"unidad": "La unidad seleccionada no corresponde a este cargo."})

@@ -10,7 +10,7 @@ from ..models import (
     ResponsableUnidad, UnidadCarrera,
 )
 from .serializers.catalog import (
-    AliasLugarCarreraSerializer, CarreraSerializer, CategoriaLugarSerializer,
+    AliasLugarCarreraSerializer, AutoridadFacultadSerializer, CarreraSerializer, CategoriaLugarSerializer,
     EdificioSerializer, FotoLugarSerializer,
     LugarSerializer,
     PersonaSerializer, PisoSerializer, PlanoInteriorSerializer,
@@ -97,10 +97,10 @@ class AliasLugarCarreraViewSet(ReadOnlyCatalogViewSet):
 
 
 class UnidadCarreraViewSet(ReadOnlyCatalogViewSet):
-    queryset = UnidadCarrera.objects.select_related("carrera", "lugar").prefetch_related("responsables__persona")
+    queryset = UnidadCarrera.objects.select_related("carrera", "campus", "lugar").prefetch_related("responsables__persona")
     serializer_class = UnidadCarreraSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["carrera", "tipo", "activo"]
+    filterset_fields = ["carrera", "campus", "tipo", "activo"]
 
 
 class PersonaViewSet(ReadOnlyCatalogViewSet):
@@ -109,5 +109,11 @@ class PersonaViewSet(ReadOnlyCatalogViewSet):
 
 
 class ResponsableUnidadViewSet(ReadOnlyCatalogViewSet):
-    queryset = ResponsableUnidad.objects.select_related("unidad", "persona")
+    queryset = ResponsableUnidad.objects.select_related("unidad__campus", "unidad__lugar", "persona")
     serializer_class = ResponsableUnidadSerializer
+
+
+class AutoridadFacultadViewSet(ReadOnlyCatalogViewSet):
+    queryset = ResponsableUnidad.objects.filter(activo=True, unidad__activo=True, cargo__in=["DECANO", "VICEDECANO"]).select_related("unidad__campus", "unidad__lugar", "persona").order_by("cargo")
+    serializer_class = AutoridadFacultadSerializer
+    pagination_class = None

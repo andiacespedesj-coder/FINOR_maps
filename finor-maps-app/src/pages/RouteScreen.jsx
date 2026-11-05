@@ -43,7 +43,7 @@ export default function RouteScreen() {
 
   const destination = places.find((place) => String(place.id) === placeId);
   const destinationName = destination?.properties?.nombre || '';
-  const destinationResolution = useMemo(() => destinationNodesForPlace(graph.nodes, destination), [destination, graph.nodes]);
+  const destinationResolution = useMemo(() => destinationNodesForPlace(graph.nodes, destination, graph.connections), [destination, graph.nodes, graph.connections]);
   const destinationNodes = destinationResolution.nodes;
   const originPlace = places.find((place) => originChoice === `place:${place.id}`);
   const originNode = graph.nodes.find((node) => originChoice === `node:${node.id}`);
@@ -115,10 +115,8 @@ export default function RouteScreen() {
     if (!destination) status = 'Este destino ya no está disponible.';
     else if (!graph.nodes.length || !graph.connections.length) status = 'Aún no hay recorridos disponibles en el campus.';
     else if (!destinationNodes.length) status = 'Este destino aún no tiene un recorrido registrado.';
-    else if (originMode === 'manual' && !originChoice) status = 'Elige tu lugar o punto de inicio para calcular el recorrido.';
     else if (originMode === 'manual' && originPlace && !nodesForPlace(graph.nodes, originPlace.id).length) status = 'El lugar de inicio aún no tiene un recorrido registrado.';
-    else if (originMode === 'gps' && !gpsOrigin) status = gpsBusy ? 'Buscando tu ubicación exterior…' : 'Usa el botón de ubicación o elige tu punto de inicio.';
-    else if (!result) status = 'Todavía no existe un camino conectado entre el inicio y este destino.';
+    else if ((originMode === 'manual' && originChoice || originMode === 'gps' && gpsOrigin) && !result) status = 'Aún no hay una ruta desde este punto. Prueba con otro inicio.';
   }
 
   if (guiding && steps.length) return <GuidedRouteView
@@ -142,51 +140,51 @@ export default function RouteScreen() {
     <main className="route-screen">
       <header className="route-header">
         <button onClick={() => navigate(-1)} aria-label="Volver al detalle"><ArrowLeft size={21} /></button>
-        <div><span>FINOR Maps</span><h1>Cómo llegar</h1></div>
+        <h1>Cómo llegar</h1>
       </header>
 
-      <section className="route-destination" aria-label="Destino seleccionado">
-        <span className="route-destination-icon"><MapPin size={24} /></span>
-        <div><small>DESTINO</small><h2>{destinationName || (loading ? 'Cargando destino…' : 'Selecciona un destino')}</h2>
-          {destination && <p>{[destination.properties?.piso_nombre, destination.properties?.edificio_nombre].filter(Boolean).join(' · ')}</p>}
+      <section className="route-plan" aria-label="Preparar ruta">
+        <div className="route-point route-point-origin">
+          <span className="route-point-marker" aria-hidden="true" />
+          <div className="route-point-content">
+            <div className="route-point-heading"><label htmlFor="route-origin-place">Desde</label>
+              <button className="route-gps" onClick={locateOrigin} disabled={gpsBusy || loading || !destinationNodes.length || !graph.nodes.length} aria-label="Usar mi ubicación exterior">
+                {gpsBusy ? <LoaderCircle className="spin" size={16} /> : <Navigation size={16} />}
+                {gpsBusy ? 'Buscando…' : 'Usar GPS'}
+              </button>
+            </div>
+            <select id="route-origin-place" value={originMode === 'manual' ? originChoice : ''}
+              onChange={(event) => { gpsRequestId.current += 1; setGpsBusy(false); setOriginMode('manual'); setOriginChoice(event.target.value); setGpsOrigin(null); setGpsError(''); setStepIndex(0); setGuiding(false); }}>
+              <option value="">{originMode === 'gps' && gpsOrigin ? `Cerca de ${gpsOrigin.node.properties?.nombre || 'tu ubicación'}` : gpsBusy ? 'Buscando tu ubicación…' : 'Elige tu punto de inicio'}</option>
+              {origins.length > 0 && <optgroup label="Lugares">
+                {origins.map((place) => <option key={place.id} value={`place:${place.id}`}>{labelFor(place)}</option>)}
+              </optgroup>}
+              <optgroup label="Puntos de referencia">
+                {graph.nodes.filter((node) => node.properties?.nombre && !destinationNodes.some((item) => item.id === node.id)).map((node) => <option key={node.id} value={`node:${node.id}`}>{node.properties.nombre}</option>)}
+              </optgroup>
+            </select>
+            {gpsError && <p className="route-error" role="alert">{gpsError}</p>}
+          </div>
         </div>
+
+        <div className="route-point route-point-destination">
+          <span className="route-point-marker" aria-hidden="true"><MapPin size={16} /></span>
+          <div className="route-point-content"><span className="route-point-label">Hasta</span>
+            <strong>{destinationName || (loading ? 'Cargando destino…' : 'Destino no disponible')}</strong>
+            {destination && <small>{[destination.properties?.piso_nombre, destination.properties?.edificio_nombre].filter(Boolean).join(' · ')}</small>}
+          </div>
+        </div>
+
+        {destinationResolution.approximate && <p className="route-approximation" role="status">Llegada aproximada: {destinationResolution.referenceName}</p>}
+        {loading && <div className="route-state"><LoaderCircle className="spin" size={20} /><p>Cargando ruta…</p></div>}
+        {loadError && <div className="route-state" role="alert"><p>{loadError}</p></div>}
+        {status && <div className="route-state"><Route size={18} /><p>{status}</p></div>}
+
+        {steps.length > 0 && <div className="route-ready">
+          <span><Route size={17} /> Ruta lista · {steps.length} {steps.length === 1 ? 'punto' : 'puntos'}</span>
+          <button className="route-start" onClick={() => { setStepIndex(0); setGuiding(true); }}>Iniciar recorrido <ChevronRight size={20} /></button>
+        </div>}
       </section>
-
-      {destinationResolution.approximate && <div className="route-approximation" role="status"><MapPin size={18} /><p>Este piso todavía no tiene una llegada exacta. El recorrido termina en <strong>{destinationResolution.referenceName}</strong>, un punto de referencia de {destinationName}.</p></div>}
-
-      <section className="route-origin" aria-label="Seleccionar punto de inicio">
-        <h2>¿Dónde estás?</h2>
-        <p>Buscaremos tu posición exterior. Si estás dentro de un edificio, selecciona el punto donde estás.</p>
-        <label htmlFor="route-origin-place">Punto de inicio</label>
-        <select id="route-origin-place" value={originMode === 'manual' ? originChoice : ''}
-          onChange={(event) => { gpsRequestId.current += 1; setGpsBusy(false); setOriginMode('manual'); setOriginChoice(event.target.value); setGpsOrigin(null); setGpsError(''); setStepIndex(0); setGuiding(false); }}>
-          <option value="">Selecciona dónde estás</option>
-          {origins.length > 0 && <optgroup label="Lugares">
-            {origins.map((place) => <option key={place.id} value={`place:${place.id}`}>{labelFor(place)}</option>)}
-          </optgroup>}
-          <optgroup label="Puntos de referencia">
-            {graph.nodes.filter((node) => node.properties?.nombre && !destinationNodes.some((item) => item.id === node.id)).map((node) => <option key={node.id} value={`node:${node.id}`}>{node.properties.nombre}</option>)}
-          </optgroup>
-        </select>
-        <button className="route-gps" onClick={locateOrigin} disabled={gpsBusy || loading || !destinationNodes.length || !graph.nodes.length}>
-          {gpsBusy ? <LoaderCircle className="spin" size={19} /> : <Navigation size={19} />}
-          {gpsBusy ? 'Buscando tu posición…' : 'Usar mi ubicación exterior'}
-        </button>
-        {originMode === 'gps' && gpsOrigin && <p className="route-gps-result">Inicio aproximado: {gpsOrigin.node.properties?.nombre || 'punto cercano'} ({Math.round(gpsOrigin.distance)} m de tu GPS).</p>}
-        {gpsError && <p className="route-error" role="alert">{gpsError}</p>}
-      </section>
-
-      {loading && <div className="route-state"><LoaderCircle className="spin" size={28} /><p>Cargando recorridos…</p></div>}
-      {loadError && <div className="route-state" role="alert"><p>{loadError}</p></div>}
-      {status && <div className="route-state"><Route size={27} /><p>{status}</p></div>}
-
-      {steps.length > 0 && <section className="route-preview" aria-label="Resumen de la ruta">
-        <span className="route-preview-eyebrow">RECORRIDO LISTO</span>
-        <h2>{steps.length} {steps.length === 1 ? 'paso' : 'pasos'} hasta {destinationName}</h2>
-        <p>{result.distanceMeters != null ? `${Math.round(result.distanceMeters)} m registrados` : 'Distancia pendiente de registrar'} · {steps.filter((step) => step.photo?.imagen).length} {steps.filter((step) => step.photo?.imagen).length === 1 ? 'fotografía' : 'fotografías'} de referencia</p>
-        <button className="route-start" onClick={() => { setStepIndex(0); setGuiding(true); }}>Iniciar ruta guiada <ChevronRight size={20} /></button>
-        <ol className="route-preview-list">{steps.map((step) => <li key={step.id}><strong>{step.title}</strong><span>{step.reference || step.instruction}</span></li>)}</ol>
-      </section>}
     </main>
   );
 }

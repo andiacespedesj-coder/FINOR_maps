@@ -29,6 +29,14 @@ test('no inventa un camino cuando faltan conexiones', () => {
   assert.equal(findRoute(nodes, [], [nodes[0]], [nodes[1]]), null);
 });
 
+test('la llegada no termina en un nodo de paso asociado al mismo lugar', () => {
+  const nodes = [node(1), node(2), node(3, 20, null, 'PASILLO'), node(4, 20, null, 'REFERENCIA'), node(5, 20)];
+  const connections = [edge(1, 2, 5), edge(2, 3, 5), edge(3, 4, 5)];
+  const destination = destinationNodesForPlace(nodes, { id: 20, properties: { nombre: 'Oficina' } }, connections);
+  assert.deepEqual(destination.nodes.map((item) => item.id), [4]);
+  assert.deepEqual(findRoute(nodes, connections, [nodes[0]], destination.nodes).nodes.map((item) => item.id), [1, 2, 3, 4]);
+});
+
 test('un piso sin nodo propio usa una referencia cercana de ese piso, pero un aula no', () => {
   const nodes = [
     node(1, null, [-63.269469, -17.338766], 'ENTRADA', 5),
@@ -110,4 +118,20 @@ test('una foto muestra varias flechas y recomienda la que sigue el camino calcul
   assert.equal(steps[0].photo.imagen, '/entrada.jpg');
   assert.equal(steps[0].photoIsGuided, true);
   assert.deepEqual(steps[0].arrows.map((arrow) => [arrow.nodo_destino, arrow.recommended]), [[2, true], [3, false]]);
+});
+
+test('oculta una flecha que obliga a regresar al mismo cruce para llegar al destino', () => {
+  const nodes = [node(1), node(2), node(3), node(4, 20)];
+  const connections = [
+    { id: 1, ...edge(1, 2, 10) },
+    { id: 2, ...edge(2, 3, 10) },
+    { id: 3, ...edge(2, 4, 10) },
+  ];
+  const photos = [{ nodo: 2, imagen: '/cruce.jpg', flechas: [
+    { id: 5, conexion: 2, nodo_destino: 3, direccion: 'ADELANTE', posicion_x: '0.5', posicion_y: '0.5' },
+  ] }];
+  const route = findRoute(nodes, connections, [nodes[0]], [nodes[3]]);
+  const steps = interactiveRouteInstructions(route, 'Destino', 'Entrada', { nodes, connections, photos }, [nodes[3]]);
+  assert.deepEqual(route.nodes.map((item) => item.id), [1, 2, 4]);
+  assert.deepEqual(steps[1].arrows, []);
 });

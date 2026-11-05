@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Building2, CalendarClock, ChevronDown, DoorOpen, Expand, Layers3, LoaderCircle, Route, UsersRound, X } from 'lucide-react';
+import { ArrowLeft, Building2, CalendarClock, ChevronDown, DoorOpen, Expand, LoaderCircle, Route, UsersRound, X } from 'lucide-react';
 import { loadBuildingDirectory, placeRelations } from '../services/catalogData';
 import PlaceIcon from '../components/PlaceIcon';
 import './DetailScreen.css';
+
+const cargoLabels = { DIRECTOR: 'Director(a)', EJECUTIVO: 'Ejecutivo(a)', DECANO: 'Decano(a)', VICEDECANO: 'Vicedecano(a)' };
 
 export default function DetailScreen() {
   const { id } = useParams();
@@ -54,17 +56,12 @@ export default function DetailScreen() {
           ? <img src={building.fotografia} alt={`Vista de ${building.nombre}`} onError={() => setHeroImageFailed(true)} />
           : <div className="building-hero-fallback" aria-hidden="true"><Building2 size={42} /></div>}
         <button className="hero-back" onClick={() => navigate(-1)} aria-label="Volver"><ArrowLeft size={22} /></button>
+        <div className="building-hero-title"><span>EDIFICIO · CAMPUS FINOR</span><h1>{building.nombre}</h1></div>
       </header>
 
-      <section className="building-overview">
-        <span className="detail-eyebrow">CAMPUS FINOR · EDIFICIO</span>
-        <h1>{building.nombre}</h1>
-        <p>{building.descripcion || 'Explora los pisos y ambientes de este edificio.'}</p>
-        {building.carreras_nombres?.length > 0 && <div className="career-chips">{building.carreras_nombres.map((career) => <span key={career}>{career}</span>)}</div>}
-      </section>
-
       <section className="building-directory" aria-label="Pisos y lugares del edificio">
-        <div className="directory-heading"><div><h2>Explorar edificio</h2><p>Selecciona un piso para ver sus ambientes.</p></div><span className="floor-total"><Layers3 size={15} />{floors.length} {floors.length === 1 ? 'piso' : 'pisos'}</span></div>
+        {building.descripcion && <p className="building-description">{building.descripcion}</p>}
+        <div className="directory-heading"><h2>Pisos</h2></div>
         {floors.length > 0
           ? <div className="floor-tabs" role="group" aria-label="Seleccionar piso">{floors.map((item) => <button key={item.id} className={item.id === activeFloor ? 'selected' : ''} aria-pressed={item.id === activeFloor} onClick={() => { setActiveFloor(item.id); setExpandedPlaceId(null); }}>{item.nombre}</button>)}</div>
           : <p className="detail-empty">Este edificio aún no tiene pisos publicados.</p>}
@@ -73,26 +70,31 @@ export default function DetailScreen() {
           <img src={floor.plano} alt="" /><span><strong>Plano de {floor.nombre}</strong><small>Abrir imagen completa</small></span><Expand size={19} />
         </button>}
 
-        {floor && <div className="places-heading"><h3>Ambientes de {floor.nombre}</h3><span>{places.length === 0 ? 'Sin ambientes' : `${places.length} ${places.length === 1 ? 'ambiente' : 'ambientes'}`}</span></div>}
+        {floor && <div className="places-heading"><h3>Lugares</h3></div>}
         <div className="place-list">
           {places.map((place) => {
             const p = place.properties || {};
             const { aliases, units } = placeRelations(data, place.id);
+            const hasFacultyOfficeHours = units.some((unit) => ['DECANATO', 'VICEDECANATO'].includes(unit.tipo) && unit.horario_atencion);
             const expanded = expandedPlaceId === place.id;
             const photos = [...(p.fotografias || [])].sort((a, b) => a.orden - b.orden);
             return <article id={`place-${place.id}`} key={place.id} className={`place-item${expanded ? ' expanded' : ''}`}>
-              <button className="place-trigger" aria-expanded={expanded} onClick={() => setExpandedPlaceId(expanded ? null : place.id)}>
-                <span className="place-icon"><PlaceIcon name={p.categoria_icono} size={22} /></span>
-                <span className="place-main"><strong>{p.nombre}</strong><small>{[p.categoria_nombre, p.codigo_visible && `Código ${p.codigo_visible}`].filter(Boolean).join(' · ')}</small></span>
-                <ChevronDown className="place-chevron" size={20} />
-              </button>
+              <div className="place-summary">
+                <div className="place-main"><span>{p.categoria_nombre || 'Lugar'}</span><h4>{p.nombre}</h4>{p.codigo_visible && <small>Código {p.codigo_visible}</small>}</div>
+                {photos.length > 0
+                  ? <button className="place-cover" onClick={() => setSelectedMedia({ url: photos[0].imagen, label: photos[0].descripcion || `Fotografía de ${p.nombre}` })} aria-label={`Ampliar fotografía de ${p.nombre}`}><img src={photos[0].imagen} alt="" loading="lazy" /></button>
+                  : <span className="place-icon"><PlaceIcon name={p.categoria_icono} size={27} /></span>}
+              </div>
+              <div className="place-actions">
+                <button className="place-route" onClick={() => navigate(`/route/${place.id}`)}><Route size={17} /> Cómo llegar</button>
+                <button className="place-trigger" aria-expanded={expanded} onClick={() => setExpandedPlaceId(expanded ? null : place.id)}>Información <ChevronDown className="place-chevron" size={17} /></button>
+              </div>
               {expanded && <div className="place-details">
                 {p.descripcion && <p>{p.descripcion}</p>}
-                {p.horario && <div className="place-meta"><CalendarClock size={16} /><span>Horario: {p.horario}</span></div>}
+                {p.horario && !hasFacultyOfficeHours && <div className="place-meta"><CalendarClock size={16} /><span>Horario: {p.horario}</span></div>}
                 {p.publico === false && <span className="place-access">Acceso restringido</span>}
-                {p.accesible && <span className="place-access">Acceso para movilidad reducida</span>}
-                {photos.length > 0 && <div className="place-photos" aria-label={`Fotografías de ${p.nombre}`}>
-                  {photos.map((photo) => <button key={photo.id} onClick={() => setSelectedMedia({ url: photo.imagen, label: photo.descripcion || `Fotografía de ${p.nombre}` })} aria-label={`Ampliar fotografía de ${p.nombre}`}>
+                {photos.length > 1 && <div className="place-photos" aria-label={`Más fotografías de ${p.nombre}`}>
+                  {photos.slice(1).map((photo) => <button key={photo.id} onClick={() => setSelectedMedia({ url: photo.imagen, label: photo.descripcion || `Fotografía de ${p.nombre}` })} aria-label={`Ampliar fotografía de ${p.nombre}`}>
                     <img src={photo.imagen} alt={photo.descripcion || p.nombre} />
                   </button>)}
                 </div>}
@@ -100,9 +102,8 @@ export default function DetailScreen() {
                 {units.map((unit) => <div className="unit-details" key={unit.id}>
                   <strong>{unit.nombre}</strong>
                   {unit.horario_atencion && <span><CalendarClock size={15} />{unit.horario_atencion}</span>}
-                  {unit.responsables?.filter((person) => person.activo).map((person) => <span key={`${unit.id}-${person.nombre}`}><UsersRound size={15} />{person.cargo === 'DIRECTOR' ? 'Director(a)' : 'Ejecutivo(a)'}: {person.nombre}</span>)}
+                  {unit.responsables?.filter((person) => person.activo).map((person) => <span key={`${unit.id}-${person.nombre}`}><UsersRound size={15} />{cargoLabels[person.cargo] || 'Responsable'}: {person.nombre}</span>)}
                 </div>)}
-                <button className="place-route" onClick={() => navigate(`/route/${place.id}`)}><Route size={17} /> Cómo llegar a este lugar</button>
               </div>}
             </article>;
           })}

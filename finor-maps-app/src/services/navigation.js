@@ -6,10 +6,28 @@ export function nodesForPlace(nodes, placeId) {
   return nodes.filter((node) => asId(properties(node).lugar) === asId(placeId));
 }
 
-export function destinationNodesForPlace(nodes, place, maxReferenceDistanceMeters = 60) {
+export function destinationNodesForPlace(nodes, place, connections = [], maxReferenceDistanceMeters = 60) {
   if (!place) return { nodes: [], approximate: false };
   const exact = nodesForPlace(nodes, place.id);
-  if (exact.length) return { nodes: exact, approximate: false };
+  if (exact.length) {
+    if (exact.length === 1 || !connections.length) return { nodes: exact, approximate: false };
+    // Si el lugar incluye nodos de paso, la llegada debe ser un extremo conectado del recorrido.
+    const connected = exact.filter((node) => connections.some((connection) => {
+      const edge = properties(connection);
+      return asId(edge.nodo_origen) === nodeId(node) || asId(edge.nodo_destino) === nodeId(node);
+    }));
+    const candidates = connected.length ? connected : exact;
+    const endpoints = candidates.filter((node) => {
+      const neighbors = new Set(connections.flatMap((connection) => {
+        const edge = properties(connection);
+        if (asId(edge.nodo_origen) === nodeId(node)) return [asId(edge.nodo_destino)];
+        if (asId(edge.nodo_destino) === nodeId(node)) return [asId(edge.nodo_origen)];
+        return [];
+      }));
+      return neighbors.size === 1;
+    });
+    return { nodes: endpoints.length ? endpoints : candidates, approximate: false };
+  }
 
   const details = properties(place);
   const normalize = (value) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
@@ -172,16 +190,31 @@ export function routeInstructions(route, destinationName, originName, photos = [
 }
 
 export function interactiveRouteInstructions(route, destinationName, originName, graph, destinationNodes) {
-  return routeInstructions(route, destinationName, originName, graph.photos).map((step, index) => ({
-    ...step,
-    arrows: (step.photo?.flechas || []).map((arrow) => {
-      const target = graph.nodes.find((node) => asId(node.id) === asId(arrow.nodo_destino));
-      if (!target || !findRoute(graph.nodes, graph.connections, [target], destinationNodes)) return null;
-      return {
-        ...arrow,
-        targetName: properties(target).nombre,
-        recommended: asId(target.id) === nodeId(route.nodes[index + 1]),
-      };
-    }).filter(Boolean),
-  }));
+  return routeInstructions(route, destinationName, originName, graph.photos).map((step, index) => {
+    const currentId = step.id;
+    const forwardNodes = graph.nodes.filter((node) => nodeId(node) !== currentId);
+    const forwardConnections = graph.connections.filter((connection) => {
+      const edge = properties(connection);
+      return asId(edge.nodo_origen) !== currentId && asId(edge.nodo_destino) !== currentId;
+    });
+    return {
+      ...step,
+      arrows: (step.photo?.flechas || []).map((arrow) => {
+        const targetId = asId(arrow.nodo_destino);
+        const target = graph.nodes.find((node) => nodeId(node) === targetId);
+        const connected = graph.connections.some((connection) => {
+          const edge = properties(connection);
+          return asId(edge.id) === asId(arrow.conexion) &&
+            ((asId(edge.nodo_origen) === currentId && asId(edge.nodo_destino) === targetId) ||
+              (edge.bidireccional && asId(edge.nodo_destino) === currentId && asId(edge.nodo_origen) === targetId));
+        });
+        if (!target || !connected || !findRoute(forwardNodes, forwardConnections, [target], destinationNodes)) return null;
+        return {
+          ...arrow,
+          targetName: properties(target).nombre,
+          recommended: targetId === nodeId(route.nodes[index + 1]),
+        };
+      }).filter(Boolean),
+    };
+  });
 }

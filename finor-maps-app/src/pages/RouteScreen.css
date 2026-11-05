@@ -1,31 +1,147 @@
-.route-screen { min-height: 100%; padding-bottom: max(24px, env(safe-area-inset-bottom)); background: var(--finor-page); color: #193650; }
-.route-header { display: flex; align-items: center; gap: 12px; padding: max(16px, env(safe-area-inset-top)) 16px 17px; background: var(--finor-navy); color: #fff; }
-.route-header > button { display: grid; flex: none; width: 44px; height: 44px; place-items: center; border: 1px solid rgba(255,255,255,.3); border-radius: 9px; background: rgba(255,255,255,.1); color: #fff; }
-.route-header span { color: #cadfed; font-size: .73rem; }
-.route-header h1 { margin: 2px 0 0; font-size: 1.25rem; }
-.route-destination { display: flex; gap: 13px; padding: 18px 17px; border-bottom: 1px solid var(--finor-border); background: #fff; }
-.route-destination-icon { display: grid; flex: none; width: 46px; height: 46px; place-items: center; border-radius: 10px; background: var(--finor-pale); color: var(--finor-blue); }
-.route-destination small, .route-preview-eyebrow { color: var(--finor-blue); font-size: .7rem; font-weight: 800; letter-spacing: .06em; }
-.route-destination h2 { margin: 4px 0 3px; font-size: 1.05rem; }
-.route-destination p, .route-origin p { margin: 0; color: var(--finor-muted); font-size: .8rem; line-height: 1.45; }
-.route-approximation { display: flex; gap: 9px; margin: 15px 15px 0; padding: 12px; border: 1px solid #c8e0ef; border-radius: 10px; background: #edf7fc; color: #23658e; }
-.route-approximation svg { flex: none; margin-top: 2px; }
-.route-approximation p { margin: 0; font-size: .78rem; line-height: 1.45; }
-.route-origin, .route-preview { margin: 15px 15px 0; padding: 17px; border: 1px solid var(--finor-border); border-radius: 11px; background: #fff; }
-.route-origin h2 { margin: 0 0 5px; font-size: 1rem; }
-.route-origin label { display: block; margin: 18px 0 7px; color: #31536f; font-size: .78rem; font-weight: 700; }
-.route-origin select { width: 100%; min-height: 48px; padding: 0 10px; border: 1px solid #b8cada; border-radius: 8px; background: #fff; color: #193650; font-size: .85rem; }
-.route-origin select + h2 { margin-top: 20px; }
-.route-gps { display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; min-height: 48px; margin-top: 11px; border: 1px solid var(--finor-blue); border-radius: 8px; background: var(--finor-pale); color: var(--finor-navy); font-size: .85rem; font-weight: 700; }
+.route-screen {
+  min-height: 100dvh;
+  padding-bottom: max(28px, env(safe-area-inset-bottom));
+  background: #f4f8fb;
+  color: #173b58;
+}
+
+.route-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 104px;
+  padding: max(16px, env(safe-area-inset-top)) 18px 34px;
+  background: #103f70;
+  color: #fff;
+}
+.route-header > button {
+  display: grid;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.32);
+  border-radius: 50%;
+  background: rgba(255,255,255,.12);
+  color: #fff;
+}
+.route-header h1 { margin: 0; font-size: 1.19rem; font-weight: 800; letter-spacing: -.02em; }
+.route-header span { color: #c9deee; font-size: .7rem; }
+
+.route-plan {
+  position: relative;
+  max-width: 560px;
+  margin: -18px auto 0;
+  padding: 23px 19px 19px;
+  border-radius: 22px 22px 0 0;
+  background: #fff;
+  box-shadow: 0 -5px 22px rgba(12, 54, 88, .06);
+}
+.route-point { position: relative; display: flex; align-items: flex-start; gap: 14px; }
+.route-point-origin { padding-bottom: 25px; }
+.route-point-origin::after {
+  position: absolute;
+  top: 25px;
+  bottom: -4px;
+  left: 10px;
+  width: 2px;
+  background: #cfdfeb;
+  content: '';
+}
+.route-point-marker {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 4px;
+  place-items: center;
+  border: 6px solid #d8ecfa;
+  border-radius: 50%;
+  background: #126ba9;
+}
+.route-point-destination .route-point-marker {
+  width: 29px;
+  height: 29px;
+  margin-left: -3px;
+  border: 0;
+  border-radius: 9px;
+  background: #e5f2fb;
+  color: #1169a8;
+}
+.route-point-content { flex: 1; min-width: 0; }
+.route-point-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+.route-point-heading label, .route-point-label { color: #587287; font-size: .75rem; font-weight: 750; }
+.route-point select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid #c9dbe8;
+  border-radius: 11px;
+  background: #f8fbfd;
+  color: #173b58;
+  font: inherit;
+  font-size: .84rem;
+  font-weight: 650;
+}
+.route-gps {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid #cce1f0;
+  border-radius: 10px;
+  background: #edf6fc;
+  color: #0e629d;
+  font-size: .73rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
 .route-gps:disabled { opacity: .55; }
-.route-origin .route-gps-result { margin-top: 11px; color: #236246; }
-.route-origin .route-error { margin-top: 11px; color: #a53032; }
-.route-state { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 15px; padding: 25px 18px; border: 1px dashed #b9cede; border-radius: 10px; color: var(--finor-blue); text-align: center; }
-.route-state p { margin: 0; color: #49657e; font-size: .85rem; line-height: 1.5; }
-.route-preview h2 { margin: 7px 0 6px; color: #173650; font-size: 1.08rem; line-height: 1.35; }
-.route-preview > p { margin: 0; color: var(--finor-muted); font-size: .78rem; line-height: 1.45; }
-.route-start { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; min-height: 49px; margin-top: 16px; border: 0; border-radius: 9px; background: var(--finor-blue); color: #fff; font-size: .88rem; font-weight: 750; }
-.route-preview-list { margin: 19px 0 0; padding: 0; list-style: none; }
-.route-preview-list li { display: flex; align-items: flex-start; gap: 11px; padding: 10px 0; border-top: 1px solid #e5edf3; }
-.route-preview-list li strong { flex: none; min-width: 60px; color: var(--finor-blue); font-size: .75rem; }
-.route-preview-list li span { color: #4c687e; font-size: .78rem; line-height: 1.4; }
+.route-point-destination .route-point-content { display: flex; flex-direction: column; gap: 4px; padding-top: 2px; }
+.route-point-destination strong { color: #163b59; font-size: 1.08rem; line-height: 1.25; }
+.route-point-destination small { color: #71889a; font-size: .76rem; line-height: 1.4; }
+.route-approximation, .route-error { margin: 11px 0 0; color: #4b6c82; font-size: .75rem; line-height: 1.4; }
+.route-error { color: #a33235; }
+
+.route-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 21px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #eef5fa;
+  color: #266994;
+}
+.route-state p { margin: 0; color: #426782; font-size: .78rem; line-height: 1.4; }
+.route-ready { margin-top: 25px; padding-top: 17px; border-top: 1px solid #e5edf3; }
+.route-ready > span { display: inline-flex; align-items: center; gap: 6px; color: #2c759c; font-size: .76rem; font-weight: 750; }
+.route-start {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 51px;
+  margin-top: 13px;
+  border: 0;
+  border-radius: 12px;
+  background: #1269a8;
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 800;
+  box-shadow: 0 7px 17px rgba(18, 105, 168, .17);
+}
+.route-screen button:focus-visible, .route-screen select:focus-visible { outline: 3px solid #70bff0; outline-offset: 2px; }
+
+/* Vista previa de desarrollo: conserva su presentación independiente. */
+.route-preview { max-width: 560px; margin: 16px auto; padding: 18px; border: 1px solid #dce8f1; border-radius: 14px; background: #fff; }
+.route-preview-eyebrow { color: #1269a8; font-size: .7rem; font-weight: 800; letter-spacing: .06em; }
+.route-preview h2 { margin: 8px 0; font-size: 1.1rem; }
+.route-preview > p { margin: 0; color: #6b8395; font-size: .8rem; }
+
+@media (max-width: 560px) { .route-plan { min-height: calc(100dvh - 86px); } .route-preview { margin: 16px; } }

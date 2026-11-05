@@ -104,8 +104,9 @@ class AliasLugarCarreraSerializer(serializers.ModelSerializer):
 
 
 class UnidadCarreraSerializer(serializers.ModelSerializer):
-    carrera_nombre = serializers.CharField(source="carrera.nombre", read_only=True)
-    lugar_nombre = serializers.CharField(source="lugar.nombre", read_only=True)
+    carrera_nombre = serializers.CharField(source="carrera.nombre", read_only=True, allow_null=True)
+    campus_nombre = serializers.CharField(source="campus.nombre", read_only=True, allow_null=True)
+    lugar_nombre = serializers.CharField(source="lugar.nombre", read_only=True, allow_null=True)
     responsables = serializers.SerializerMethodField()
 
     def get_responsables(self, unidad):
@@ -121,7 +122,7 @@ class UnidadCarreraSerializer(serializers.ModelSerializer):
     class Meta:
         model = UnidadCarrera
         fields = [
-            "id", "carrera", "carrera_nombre", "lugar", "lugar_nombre", "tipo",
+            "id", "carrera", "carrera_nombre", "campus", "campus_nombre", "lugar", "lugar_nombre", "tipo",
             "nombre", "horario_atencion", "activo", "responsables",
         ]
 
@@ -135,10 +136,26 @@ class PersonaSerializer(serializers.ModelSerializer):
 class ResponsableUnidadSerializer(serializers.ModelSerializer):
     persona_nombre = serializers.CharField(source="persona.nombre_completo", read_only=True)
     unidad_nombre = serializers.CharField(source="unidad.nombre", read_only=True)
+    campus = serializers.IntegerField(source="unidad.campus_id", read_only=True)
+    campus_nombre = serializers.CharField(source="unidad.campus.nombre", read_only=True, allow_null=True)
+    lugar = serializers.IntegerField(source="unidad.lugar_id", read_only=True)
+    horario_atencion = serializers.CharField(source="unidad.horario_atencion", read_only=True)
 
     class Meta:
         model = ResponsableUnidad
         fields = [
-            "id", "unidad", "unidad_nombre", "persona", "persona_nombre", "cargo",
-            "fecha_inicio", "fecha_fin", "activo",
+            "id", "unidad", "unidad_nombre", "campus", "campus_nombre", "persona", "persona_nombre", "cargo",
+            "lugar", "horario_atencion", "fecha_inicio", "fecha_fin", "activo",
         ]
+
+
+class AutoridadFacultadSerializer(serializers.ModelSerializer):
+    nombre = serializers.CharField(source="persona.nombre_completo", read_only=True)
+    campus = serializers.IntegerField(source="unidad.campus_id", read_only=True)
+    campus_nombre = serializers.CharField(source="unidad.campus.nombre", read_only=True)
+    horario_atencion = serializers.CharField(source="unidad.horario_atencion", read_only=True)
+    lugar = serializers.IntegerField(source="unidad.lugar_id", read_only=True)
+
+    class Meta:
+        model = ResponsableUnidad
+        fields = ["id", "campus", "campus_nombre", "cargo", "nombre", "horario_atencion", "lugar"]
