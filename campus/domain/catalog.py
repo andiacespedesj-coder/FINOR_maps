@@ -172,6 +172,11 @@ class FotoLugar(models.Model):
         verbose_name_plural = "Fotografías de lugares"
         ordering = ["orden", "id"]
 
+    def __str__(self):
+        if not self.lugar_id:
+            return "Fotografía de lugar"
+        return f"{self.lugar.nombre} · Foto {self.pk or 'nueva'}"
+
 
 class AliasLugarCarrera(models.Model):
     TIPO_CHOICES = [("AULA", "Aula"), ("LABORATORIO", "Laboratorio"), ("GRUPO", "Grupo académico"), ("OTRO", "Otro")]
@@ -224,24 +229,26 @@ class UnidadCarrera(models.Model):
         ]
 
     def __str__(self):
-        return self.nombre
+        partes = [self.nombre]
+        tipo = self.get_tipo_display()
+        if tipo and tipo.casefold() != self.nombre.strip().rstrip(":").casefold():
+            partes.append(tipo)
+        if self.carrera_id:
+            partes.append(self.carrera.nombre)
+        if self.campus_id:
+            partes.append(self.campus.nombre)
+        return " · ".join(partes)
 
     def clean(self):
         super().clean()
-        if self.tipo in ("DECANATO", "VICEDECANATO"):
-            if not self.campus_id:
-                raise ValidationError({"campus": "Selecciona el campus de esta unidad."})
-            if self.carrera_id:
-                raise ValidationError({"carrera": "Decanato y Vicedecanato pertenecen a la facultad, no a una carrera."})
-            if self.lugar_id and self.lugar.piso.edificio.campus_id != self.campus_id:
-                raise ValidationError({"lugar": "La oficina debe pertenecer al mismo campus."})
-        elif self.tipo in ("DIRECCION", "CENTRO_INTERNO"):
-            if not self.carrera_id:
-                raise ValidationError({"carrera": "Selecciona la carrera de esta unidad."})
-            if self.campus_id:
-                raise ValidationError({"campus": "Esta unidad debe vincularse a una carrera."})
-            if not self.lugar_id:
-                raise ValidationError({"lugar": "Selecciona el lugar de esta unidad."})
+        if not self.lugar_id:
+            return
+
+        campus_del_lugar = self.lugar.piso.edificio.campus_id
+        if self.campus_id and self.campus_id != campus_del_lugar:
+            raise ValidationError({"lugar": "El lugar seleccionado pertenece a otro campus."})
+        if not self.campus_id and self.tipo in ("DECANATO", "VICEDECANATO"):
+            self.campus_id = campus_del_lugar
 
 
 class Persona(models.Model):
@@ -288,11 +295,3 @@ class ResponsableUnidad(models.Model):
         super().clean()
         if not self.unidad_id:
             raise ValidationError({"unidad": "Selecciona una unidad."})
-        tipos_por_cargo = {
-            "DIRECTOR": "DIRECCION",
-            "EJECUTIVO": "CENTRO_INTERNO",
-            "DECANO": "DECANATO",
-            "VICEDECANO": "VICEDECANATO",
-        }
-        if self.cargo in tipos_por_cargo and self.unidad.tipo != tipos_por_cargo[self.cargo]:
-            raise ValidationError({"unidad": "La unidad seleccionada no corresponde a este cargo."})

@@ -18,6 +18,12 @@ from .serializers.catalog import (
 )
 
 
+def published_places():
+    return Lugar.objects.filter(
+        publicado=True, piso__edificio__publicado=True,
+    ).select_related("categoria", "piso__edificio").prefetch_related("fotografias")
+
+
 class CategoriaLugarViewSet(ReadOnlyCatalogViewSet):
     queryset = CategoriaLugar.objects.all()
     serializer_class = CategoriaLugarSerializer
@@ -31,7 +37,7 @@ class CarreraViewSet(ReadOnlyCatalogViewSet):
 
 
 class EdificioViewSet(ReadOnlyCatalogViewSet):
-    queryset = Edificio.objects.select_related("campus").prefetch_related("pisos__planos")
+    queryset = Edificio.objects.filter(publicado=True).select_related("campus").prefetch_related("pisos__planos")
     serializer_class = EdificioSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ["nombre", "codigo"]
@@ -39,10 +45,8 @@ class EdificioViewSet(ReadOnlyCatalogViewSet):
 
     @action(detail=False, methods=["get"])
     def mapa(self, request):
-        edificios = self.get_queryset().filter(publicado=True)
-        lugares = Lugar.objects.filter(publicado=True).select_related(
-            "categoria", "piso__edificio"
-        ).prefetch_related("fotografias")
+        edificios = self.get_queryset()
+        lugares = published_places()
         edificios_data = EdificioSerializer(
             edificios, many=True, context={"request": request}
         ).data
@@ -62,7 +66,7 @@ class EdificioViewSet(ReadOnlyCatalogViewSet):
 
 
 class PisoViewSet(ReadOnlyCatalogViewSet):
-    queryset = Piso.objects.select_related("edificio").prefetch_related("planos")
+    queryset = Piso.objects.filter(edificio__publicado=True).select_related("edificio").prefetch_related("planos")
     serializer_class = PisoSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["edificio"]
@@ -70,7 +74,7 @@ class PisoViewSet(ReadOnlyCatalogViewSet):
 
 
 class LugarViewSet(ReadOnlyCatalogViewSet):
-    queryset = Lugar.objects.select_related("categoria", "piso__edificio").prefetch_related("fotografias")
+    queryset = published_places()
     serializer_class = LugarSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["categoria", "piso", "piso__edificio", "accesible", "publico"]
@@ -79,17 +83,17 @@ class LugarViewSet(ReadOnlyCatalogViewSet):
 
 
 class PlanoInteriorViewSet(ReadOnlyCatalogViewSet):
-    queryset = PlanoInterior.objects.select_related("piso__edificio")
+    queryset = PlanoInterior.objects.filter(piso__edificio__publicado=True).select_related("piso__edificio")
     serializer_class = PlanoInteriorSerializer
 
 
 class FotoLugarViewSet(ReadOnlyCatalogViewSet):
-    queryset = FotoLugar.objects.select_related("lugar")
+    queryset = FotoLugar.objects.filter(lugar__publicado=True, lugar__piso__edificio__publicado=True).select_related("lugar")
     serializer_class = FotoLugarSerializer
 
 
 class AliasLugarCarreraViewSet(ReadOnlyCatalogViewSet):
-    queryset = AliasLugarCarrera.objects.select_related("lugar", "carrera")
+    queryset = AliasLugarCarrera.objects.filter(lugar__publicado=True, lugar__piso__edificio__publicado=True).select_related("lugar", "carrera")
     serializer_class = AliasLugarCarreraSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["carrera", "lugar", "tipo", "activo"]

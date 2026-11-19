@@ -60,6 +60,7 @@ class EdificioSerializer(GeoFeatureModelSerializer):
             Carrera.objects.filter(
                 aliases_lugares__lugar__piso__edificio=edificio,
                 aliases_lugares__activo=True,
+                aliases_lugares__lugar__publicado=True,
             ).order_by("nombre").values_list("nombre", flat=True).distinct()
         )
 

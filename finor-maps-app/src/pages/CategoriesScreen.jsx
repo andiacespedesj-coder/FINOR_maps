@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, LoaderCircle, MapPin } from 'lucide-react';
-import { fetchCategorias } from '../services/api';
+import { fetchCategorias } from '../services/catalogApi';
 import PlaceIcon from '../components/PlaceIcon';
 import './CategoriesScreen.css';
 

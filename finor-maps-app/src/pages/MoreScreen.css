@@ -66,6 +66,11 @@
   font-size: .82rem;
   line-height: 1.5;
 }
+.more-about-content > p { margin: 0; }
+.more-about-content .more-about-version { margin-top: 12px; }
+.more-about-content h2 { margin: 14px 0 5px; color: #233d55; font-size: .82rem; }
+.more-about-content ul { margin: 0; padding-left: 18px; }
+.more-about-content li + li { margin-top: 3px; }
 .more-authorities-content { display: flex; flex-direction: column; gap: 12px; }
 .more-authorities-content p { margin: 0; }
 .more-authority-item { display: flex; flex-direction: column; gap: 3px; padding: 10px 0; border-bottom: 1px solid var(--finor-border); }

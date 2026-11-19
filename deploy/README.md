@@ -1,6 +1,6 @@
 # Publicar el admin FINOR en el VPS
 
-Para actualizar la instalación existente a Sprint 2, consulta [SPRINT2_UPDATE.md](SPRINT2_UPDATE.md).
+Para una guía general de publicación y actualización, consulta [DEPLOYMENT.md](../DEPLOYMENT.md).
 
 Esta guía corresponde al VPS Ubuntu 26.04 con IP `162.35.162.131`, Apache,
 PostgreSQL 18 y PostGIS 3.6. Conserva el sitio `000-default.conf` existente.

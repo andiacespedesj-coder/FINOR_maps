@@ -1,0 +1,10 @@
+.transport-route-screen { display: flex; flex-direction: column; height: 100%; min-height: 0; background: #e4edf3; }
+.transport-route-header { display: flex; flex: none; align-items: center; gap: 14px; padding: max(14px, env(safe-area-inset-top)) 16px 14px; background: var(--finor-header-gradient); color: #123858; }
+.transport-route-header button { display: grid; flex: none; width: 44px; height: 44px; place-items: center; border: 0; border-radius: 50%; background: #fff; color: #0e3f70; }
+.transport-route-header span { color: #185d92; font-size: .62rem; font-weight: 800; letter-spacing: .09em; }
+.transport-route-header h1 { margin: 4px 0 0; font-size: 1.15rem; line-height: 1.2; }
+.transport-route-map { position: relative; flex: 1; min-height: 0; }
+.transport-route-status { position: absolute; z-index: 500; right: 80px; bottom: 32px; left: 14px; width: fit-content; max-width: calc(100% - 94px); padding: 9px 12px; border-radius: 12px; background: #fff; color: #173b5a; box-shadow: 0 3px 12px rgba(14, 47, 76, .18); font-size: .75rem; line-height: 1.35; }
+.transport-route-locate { position: absolute; z-index: 500; right: 14px; bottom: 32px; display: grid; width: 52px; height: 52px; place-items: center; border: 0; border-radius: 18px; background: #fff; color: #07548f; box-shadow: 0 3px 12px rgba(14, 47, 76, .18); }
+.transport-route-locate:disabled { opacity: .75; }
+.transport-route-header button:focus-visible, .transport-route-locate:focus-visible { outline: 3px solid #66b9ef; outline-offset: 2px; }

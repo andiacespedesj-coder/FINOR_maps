@@ -13,7 +13,7 @@ export default function BottomNav() {
     <nav className="bottom-nav" aria-label="Navegación principal">
       {items.map(({ to, label, icon: Icon, end }) => (
         <NavLink key={to} to={to} end={end} className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-          <Icon size={22} />
+          <span className="nav-icon" aria-hidden="true"><Icon size={22} /></span>
           <span>{label}</span>
         </NavLink>
       ))}

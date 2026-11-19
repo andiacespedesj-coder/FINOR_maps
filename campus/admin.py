@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django import forms
 from django.db.models import Q
 from django.utils.html import format_html
 from leaflet.admin import LeafletGeoAdmin
@@ -199,10 +200,27 @@ class UnidadCarreraAdmin(admin.ModelAdmin):
         ("Unidad", {"fields": ("nombre", "tipo", "activo")}),
         ("A quién pertenece", {
             "fields": ("carrera", "campus"),
-            "description": "Dirección y Centro interno: selecciona Carrera. Decanato y Vicedecanato: selecciona Campus FINOR. Deja vacío el otro campo.",
+            "description": "Carrera y campus son opcionales. Si eliges un lugar para Decanato o Vicedecanato, se usará su campus cuando no hayas seleccionado uno.",
         }),
         ("Atención", {"fields": ("lugar", "horario_atencion")}),
     )
+
+
+class UnidadChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, unidad):
+        partes = [unidad.get_tipo_display()]
+        if unidad.carrera_id:
+            partes.append(unidad.carrera.nombre)
+        if unidad.campus_id:
+            partes.append(unidad.campus.nombre)
+        if unidad.lugar_id:
+            partes.append(unidad.lugar.nombre)
+        nombre = unidad.nombre.strip().rstrip(":").strip()
+        if nombre and nombre.casefold() != partes[0].casefold():
+            partes.append(nombre)
+        if not unidad.activo:
+            partes.append("Inactiva")
+        return " · ".join(partes)
 
 
 @admin.register(ResponsableUnidad)
@@ -210,12 +228,36 @@ class ResponsableUnidadAdmin(admin.ModelAdmin):
     list_display = ("persona", "cargo", "unidad", "activo")
     list_filter = ("cargo", "unidad__tipo", "activo")
     search_fields = ("persona__nombre_completo", "unidad__nombre")
-    list_select_related = ("unidad", "persona")
+    list_select_related = ("unidad__carrera", "unidad__campus", "persona")
     fieldsets = (
         ("Persona y cargo", {"fields": ("persona", "cargo", "unidad", "activo"),
-                             "description": "Crea primero la unidad correspondiente. Decano usa Decanato y Vicedecano usa Vicedecanato."}),
+                             "description": "Selecciona la persona, su cargo y la unidad donde trabaja."}),
         ("Vigencia", {"fields": ("fecha_inicio", "fecha_fin")}),
     )
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "unidad":
+            kwargs["form_class"] = UnidadChoiceField
+            kwargs["queryset"] = UnidadCarrera.objects.select_related("carrera", "campus", "lugar")
+            kwargs["widget"] = forms.Select(attrs={"style": "width: 32rem; max-width: 100%;"})
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-admin.site.register((PlanoInterior, FotoLugar, AliasLugarCarrera, Persona))
+
+@admin.register(FotoLugar)
+class FotoLugarAdmin(admin.ModelAdmin):
+    list_display = ("id", "lugar", "piso", "edificio", "descripcion", "principal", "orden")
+    list_display_links = ("id", "lugar")
+    list_filter = ("lugar__piso__edificio", "principal")
+    search_fields = ("lugar__nombre", "lugar__piso__nombre", "lugar__piso__edificio__nombre", "descripcion")
+    list_select_related = ("lugar__piso__edificio",)
+
+    @admin.display(description="Piso", ordering="lugar__piso__nombre")
+    def piso(self, foto):
+        return foto.lugar.piso.nombre
+
+    @admin.display(description="Edificio", ordering="lugar__piso__edificio__nombre")
+    def edificio(self, foto):
+        return foto.lugar.piso.edificio.nombre
+
+
+admin.site.register((PlanoInterior, AliasLugarCarrera, Persona))

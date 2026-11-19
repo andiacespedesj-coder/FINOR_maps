@@ -5,6 +5,14 @@ import { fetchFacultyAuthorities } from '../services/catalogApi';
 import { clearApiCache } from '../services/httpClient';
 import './MoreScreen.css';
 
+const creators = [
+  'Jose Armando Andia Cespedes',
+  'Alexander Mamani Quispe',
+  'Joaquin Aguilar Sipe',
+  'Richard Eduardo Gonzales Lazarte',
+  'Santiago Ramirez Ramos',
+];
+
 export default function MoreScreen() {
   const navigate = useNavigate();
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -68,7 +76,10 @@ export default function MoreScreen() {
             <ChevronDown className={aboutOpen ? 'more-arrow is-open' : 'more-arrow'} size={20} />
           </button>
           {aboutOpen && <div className="more-about-content">
-            FINOR Maps es un proyecto académico de Ingeniería de Sistemas para explorar los edificios, pisos y ambientes de la Facultad Integral del Norte.
+            <p>FINOR Maps es un proyecto académico de Ingeniería de Sistemas para explorar los edificios, pisos y ambientes de la Facultad Integral del Norte.</p>
+            <p className="more-about-version">Versión Android: <strong>{__ANDROID_VERSION__}</strong></p>
+            <h2>Equipo creador</h2>
+            <ul>{creators.map((name) => <li key={name}>{name}</li>)}</ul>
           </div>}
         </div>
 

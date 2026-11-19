@@ -2,7 +2,8 @@ import { MapContainer, TileLayer, GeoJSON, Tooltip, Marker, Circle, useMap } fro
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useEffect, useState, useCallback } from 'react';
-import { fetchCampusMap, getApiHelpMessage } from '../services/api';
+import { fetchCampusMap } from '../services/catalogApi';
+import { getApiHelpMessage } from '../services/httpClient';
 import { getUserPosition } from '../services/geolocation';
 import { FINOR_BOUNDS, FINOR_CENTER } from '../services/mapCoordinates';
 import { Navigation, Loader2, WifiOff } from 'lucide-react';

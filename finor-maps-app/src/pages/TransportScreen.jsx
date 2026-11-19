@@ -71,6 +71,10 @@ export default function TransportScreen() {
             <span className="transport-line-number">{line.numero}</span>
             <span className="transport-line-copy"><strong>Línea {line.numero}</strong><small>Asociación {line.asociacion}</small><span>{line.recorrido_descripcion || 'Recorrido cercano a FINOR por confirmar.'}</span>{line.horario && <small>Horario: {line.horario}</small>}</span>
           </button>)}
+          <button className="transport-line transport-preview-line" onClick={() => navigate('/transport/recorrido-prueba')}>
+            <span className="transport-line-number"><Bus size={22} /></span>
+            <span className="transport-line-copy"><strong>Recorrido de prueba</strong><small>Archivo que exportaste</small><span>Toca aquí para ver la ruta en el mapa.</span></span>
+          </button>
         </div>
 
         {directory && lines.length > 0 && <section className="transport-stops" aria-label="Paradas cercanas">

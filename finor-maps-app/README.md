@@ -37,12 +37,12 @@ npm.cmd run check:dev
 - `services/catalogData.js`: preparación de datos para búsqueda y detalles.
 - `services/geolocation.js` y `mapCoordinates.js`: ubicación exterior y centro
   inicial del mapa.
-- `legacy/`: pantalla GPS anterior, conservada como referencia y fuera de las
-  rutas actuales.
 
 La navegación paso a paso usa nodos y conexiones reales; las fotos con flechas
-se vinculan a una conexión y a su sentido. Consulta [SPRINT_2.md](../SPRINT_2.md)
-para la carga de datos y la demostración en el campus.
+se vinculan a una conexión y a su sentido. Para habilitar un recorrido, registra
+en el panel los lugares, nodos y conexiones transitables y vincula el nodo de
+destino con el lugar. Asocia cada fotografía y flecha con su conexión de salida;
+verifica en el campus los recorridos y ambos sentidos antes de publicarlos.
 
 ## Reportar un problema
 

@@ -19,7 +19,7 @@ export async function loadPlaceDirectory() {
     allPages(fetchCareerUnits),
   ]);
   return {
-    places: placesData.features || [],
+    places: (placesData.features || []).filter((place) => place.properties?.publicado !== false),
     aliases,
     units,
   };

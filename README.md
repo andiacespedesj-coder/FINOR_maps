@@ -62,8 +62,8 @@ npm install
 npm run dev
 ```
 
-La estructura y las responsabilidades de cada carpeta se describen en
-[ARCHITECTURE.md](ARCHITECTURE.md).
+La organización de las pantallas y servicios se describe en el
+[README de la aplicación](finor-maps-app/README.md).
 
 ## Publicación móvil
 

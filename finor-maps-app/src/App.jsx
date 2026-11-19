@@ -8,11 +8,13 @@ import DetailScreen from './pages/DetailScreen';
 import RouteScreen from './pages/RouteScreen';
 import MoreScreen from './pages/MoreScreen';
 import TransportScreen from './pages/TransportScreen';
+import TransportRouteScreen from './pages/TransportRouteScreen';
 import ReportScreen from './pages/ReportScreen';
 import GuidedRoutePreview from './pages/GuidedRoutePreview';
 import BottomNav from './components/BottomNav';
 import SplashScreen from './components/SplashScreen';
 import './App.css';
+import './MaterialExpressive.css';
 
 function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
@@ -36,6 +38,7 @@ function AppContent() {
           <Route path="/route/:placeId" element={<RouteScreen />} />
           <Route path="/more" element={<MoreScreen />} />
           <Route path="/transport" element={<TransportScreen />} />
+          <Route path="/transport/recorrido-prueba" element={<TransportRouteScreen />} />
           <Route path="/report" element={<ReportScreen />} />
           {import.meta.env.DEV && <Route path="/preview/ruta" element={<GuidedRoutePreview />} />}
         </Routes>

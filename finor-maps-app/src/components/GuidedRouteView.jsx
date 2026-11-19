@@ -24,9 +24,13 @@ export default function GuidedRouteView({ destination, steps, stepIndex, onStepC
   const photoReady = photoSize?.key === photoKey;
   useEffect(() => {
     const frame = photoFrameRef.current;
-    if (!frame || typeof ResizeObserver === 'undefined') return undefined;
+    if (!frame) return undefined;
     const measure = () => setFrameSize({ width: frame.clientWidth, height: frame.clientHeight });
     measure();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure);
+      return () => window.removeEventListener('resize', measure);
+    }
     const observer = new ResizeObserver(measure);
     observer.observe(frame);
     return () => observer.disconnect();
@@ -40,7 +44,11 @@ export default function GuidedRouteView({ destination, steps, stepIndex, onStepC
   }, [steps, stepIndex]);
   useEffect(() => () => window.clearTimeout(travelTimer.current), []);
   useEffect(() => {
-    if (travel?.phase !== 'waiting' || step?.id === travel.fromId) return undefined;
+    if (travel?.phase !== 'waiting') return undefined;
+    if (step?.id === travel.fromId) {
+      const timer = window.setTimeout(() => { setTravel(null); moving.current = false; }, 1800);
+      return () => window.clearTimeout(timer);
+    }
     const reveal = () => setTravel((current) => current?.phase === 'waiting' ? { ...current, phase: 'revealing' } : current);
     if (!photo || photoReady) { reveal(); return undefined; }
     const timer = window.setTimeout(reveal, 1800);
@@ -65,7 +73,6 @@ export default function GuidedRouteView({ destination, steps, stepIndex, onStepC
       : null,
   })).filter((arrow) => arrow.point);
   const photoLoading = Boolean(photo && !photoReady);
-  const showFallback = !isLast && !photoLoading && arrows.length === 0;
   const nextPoint = arrows.find((arrow) => arrow.recommended)?.targetName;
   const nextReference = steps[stepIndex + 1]?.reference || 'Siguiente punto';
   const moveTo = (action, direction = 'ADELANTE', point = null) => {
@@ -96,23 +103,26 @@ export default function GuidedRouteView({ destination, steps, stepIndex, onStepC
 
       <header className="guided-route-header">
         <button onClick={onClose} aria-label="Cerrar guía y volver al resumen"><ArrowLeft size={22} /></button>
-        <div><span>DESTINO</span><strong>{destination}</strong></div>
-        <span className="guided-route-counter" aria-label={`Paso ${stepIndex + 1} de ${steps.length}`}>{stepIndex + 1}<small>/{steps.length}</small></span>
+        <div><DirectionIcon direction={step.direction} size={22} /><span>Hacia <strong>{destination}</strong></span></div>
       </header>
 
       <div className="guided-route-scene-bottom">
         <div className="guided-route-location"><MapPin size={16} /><span>{step.reference || step.title}</span></div>
-        {showFallback && <button className="guided-route-photo-arrow" type="button" onClick={() => moveTo(() => onStepChange(stepIndex + 1), step.direction)} disabled={Boolean(travel)} aria-label={`Continuar a ${nextReference} sin flecha registrada`}>Continuar</button>}
       </div>
     </section>
 
     <footer className="guided-route-footer" aria-live="polite">
       <div className="guided-route-footer-summary">
         <span className={`guided-route-summary-icon${isLast ? ' is-destination' : ''}`}>{isLast ? <Flag size={22} /> : <DirectionIcon direction={step.direction} size={23} />}</span>
-        <div><small>{isLast ? 'RECORRIDO COMPLETADO' : photoLoading ? 'CARGANDO FOTO' : arrows.length ? 'SIGUIENTE PUNTO' : 'FLECHA PENDIENTE'}</small><strong>{isLast ? 'Llegaste a tu destino' : arrows.length ? nextPoint || 'Elige una flecha' : nextReference}</strong></div>
+        <div><small>{isLast ? 'RECORRIDO COMPLETADO' : `PUNTO ${stepIndex + 1} DE ${steps.length}`}</small><strong>{isLast ? 'Llegaste a tu destino' : photoLoading ? 'Cargando fotografía…' : arrows.length ? nextPoint || 'Elige una flecha' : nextReference}</strong></div>
       </div>
-      {showFallback && <p className="guided-route-fallback">{step.instruction}</p>}
-      {isLast && <button className="guided-route-finish" type="button" onClick={onClose}>Terminar</button>}
+      {!isLast && <p className="guided-route-fallback">{step.instruction}</p>}
+      <div className="guided-route-controls">
+        <button type="button" onClick={() => moveTo(() => onStepChange(stepIndex - 1), 'ATRAS')} disabled={stepIndex === 0 || Boolean(travel)}><ArrowLeft size={17} /> Anterior</button>
+        {isLast
+          ? <button className="guided-route-next" type="button" onClick={onClose}>Terminar</button>
+          : <button className="guided-route-next" type="button" onClick={() => moveTo(() => onStepChange(stepIndex + 1), step.direction)} disabled={Boolean(travel)}>Siguiente <ArrowRight size={17} /></button>}
+      </div>
     </footer>
   </main>;
 }

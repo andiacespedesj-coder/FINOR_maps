@@ -1,14 +1,20 @@
 :root {
-  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  font-family: Roboto, "Segoe UI", Arial, sans-serif;
   color: #172c42;
   background: #e9eff5;
-  --finor-navy: #0b3a70;
-  --finor-blue: #1263a5;
-  --finor-blue-dark: #082e59;
-  --finor-pale: #eaf3fb;
-  --finor-page: #f5f8fb;
-  --finor-border: #dce6ef;
-  --finor-muted: #60758a;
+  --finor-navy: #113d68;
+  --finor-blue: #005ca8;
+  --finor-blue-dark: #003e73;
+  --finor-pale: #dcecff;
+  --finor-page: #f7f9ff;
+  --finor-border: #d7e3ef;
+  --finor-muted: #566c80;
+  --finor-surface: #ffffff;
+  --finor-surface-tint: #edf4fd;
+  --finor-ink: #17344e;
+  --finor-header-gradient: linear-gradient(135deg, #cce3ff 0%, #dcecff 55%, #f1f7ff 100%);
+  --finor-header-gradient-dark: linear-gradient(135deg, #123c68 0%, #175782 60%, #216c99 100%);
+  --finor-motion: cubic-bezier(.2, 1.15, .35, 1);
 }
 
 *, *::before, *::after { box-sizing: border-box; }

@@ -1,0 +1,118 @@
+/* Superficies y controles compartidos entre las pantallas de FINOR Maps. */
+:is(.categories-screen, .search-screen, .more-screen, .transport-screen, .report-screen, .route-screen) {
+  background: var(--finor-page);
+}
+
+:is(.map-top-panel, .categories-header, .more-header, .search-header-bar, .route-header, .transport-header, .report-header) {
+  background: var(--finor-header-gradient-dark);
+}
+
+:is(.categories-header h1, .transport-header h1, .report-header h1) {
+  font-weight: 750;
+  letter-spacing: -.035em;
+}
+
+.splash-finor-logo { border-radius: 28px; }
+.splash-loading { height: 5px; }
+
+/* Mapa y selección de edificios. */
+.map-top-panel { padding: max(18px, env(safe-area-inset-top)) 18px 20px; background: var(--finor-header-gradient); color: #123858; }
+.map-identity { gap: 13px; margin-bottom: 17px; }
+.map-identity img { width: 52px; height: 52px; border: 0; box-shadow: 0 2px 8px rgba(16, 61, 104, .1); }
+.map-identity h1 { color: #123858; font-size: 1.55rem; font-weight: 800; }
+.map-identity p { color: #4e6980; }
+.map-search { min-height: 54px; border: 0; border-radius: 999px; background: #fff; box-shadow: 0 3px 12px rgba(27, 71, 110, .1); }
+.map-search svg { color: var(--finor-blue); }
+.map-search span { color: #475f74; }
+.floating-gps-btn { width: 52px; height: 52px; border: 0; border-radius: 18px; background: #e0efff; color: #07548f; }
+.building-sheet { padding: 10px 18px 18px; border: 0; border-radius: 28px 28px 0 0; background: #f7faff; }
+.sheet-grip { width: 36px; height: 4px; background: #aabcca; }
+.sheet-thumbnail { border-radius: 18px; }
+.sheet-close { background: #e9f0f8; }
+.sheet-primary { min-height: 50px; border-radius: 999px; }
+:is(.map-gps-status, .map-network-notice, .map-active-filter) { border-radius: 16px; }
+
+/* Navegación, categorías y resultados de búsqueda. */
+.categories-header { padding: max(28px, env(safe-area-inset-top)) 20px 28px; background: var(--finor-header-gradient); color: #123858; }
+.categories-header span { color: #185d92; }
+.categories-header h1 { margin-top: 8px; font-size: 2rem; }
+.categories-header p { color: #4e6980; }
+.categories-content { padding-top: 16px; }
+.category-row { min-height: 72px; margin-bottom: 6px; padding: 12px; border: 0; border-radius: 18px; background: var(--finor-surface); }
+.category-row:first-of-type, .category-row:last-of-type { border-radius: 18px; }
+.category-icon, .more-icon-box, .place-result-icon, .category-result-icon { border-radius: 16px; background: var(--finor-pale); }
+.search-input-box { min-height: 50px; padding: 0 16px; border-radius: 999px; }
+.icon-back { border-radius: 50%; }
+.place-result-row { margin-bottom: 8px; overflow: hidden; border: 0; border-radius: 20px; }
+.place-result { min-height: 76px; border-radius: 20px 0 0 20px; }
+.place-result-route { width: 80px; border-left-color: #e2ecf5; border-radius: 0; background: #edf5fe; }
+.category-results-panel { border-radius: 28px 28px 0 0; background: #f7faff; }
+.category-results-grip-button { border-radius: 28px 28px 0 0; }
+.category-results-header { background: var(--finor-header-gradient); }
+.category-results-search { min-height: 48px; border: 0; border-radius: 999px; background: #eaf1f9; }
+.category-result-card { border: 1px solid #e5edf6; border-radius: 22px; box-shadow: none; }
+.category-result-card.is-selected { border-color: #80b6df; box-shadow: 0 0 0 2px #d4eaff; }
+.category-result-photos, .category-result-photos button { border-radius: 16px; }
+.category-result-actions button { min-height: 46px; border-radius: 999px; }
+
+/* Pisos y lugares; el encabezado fotográfico mantiene su diseño anterior. */
+.building-directory { padding-top: 24px; border-radius: 26px 26px 0 0; }
+.floor-tabs { gap: 8px; }
+.floor-tabs button { min-height: 46px; border-radius: 14px; background: #eaf1f8; }
+.floor-tabs button.selected { background: #cce4ff; color: #003d70; box-shadow: none; }
+.place-list { gap: 8px; }
+.place-group { border-color: #e3ebf3; border-radius: 22px; background: #f6f9fe; box-shadow: none; }
+.place-group.expanded { border-color: #c8dfef; background: #eef5fd; }
+.place-group-trigger { min-height: 70px; padding: 12px 14px; }
+.place-group-content { margin: 0 14px 14px; padding: 2px 14px; border: 0; border-radius: 16px; background: var(--finor-surface); }
+.place-icon { border-radius: 16px; background: #dcecff; }
+.place-photos button { border-radius: 16px; }
+.place-alternatives button { border-radius: 999px; }
+.floor-plan { border-radius: 20px; }
+
+/* Preparación y seguimiento de rutas. */
+.route-plan { border-radius: 28px 28px 0 0; box-shadow: none; }
+.route-point select { min-height: 52px; border-color: #ccdae8; border-radius: 15px; background: #f6f9fd; }
+.route-gps { min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: #e0efff; }
+.route-state { border-radius: 16px; }
+.guided-route-footer { border-radius: 24px 24px 0 0; background: #f9fbff; }
+.guided-route-summary-icon { border-radius: 16px; background: #dcecff; }
+.guided-route-controls button { min-height: 46px; border-radius: 999px; }
+.guided-route-header > div, .guided-route-location { border-radius: 16px; }
+
+/* Información, transporte y formulario. */
+.more-header { padding: max(26px, env(safe-area-inset-top)) 20px 24px; background: var(--finor-header-gradient); color: #123858; box-shadow: none; }
+.more-header h1 { font-size: 1.8rem; font-weight: 750; letter-spacing: -.035em; text-align: left; }
+.more-list-item, .transport-line, .transport-stop-list article { border: 0; border-radius: 22px; background: var(--finor-surface); box-shadow: none; }
+.more-about-trigger { border-radius: 22px; }
+.transport-line.selected { border: 0; background: #e5f1ff; box-shadow: inset 0 0 0 2px #9cc8e9; }
+.transport-line-number { border-radius: 16px; }
+.transport-filters button { min-height: 42px; }
+.transport-map, .transport-stop-empty { border-radius: 22px; }
+.report-intro { border: 0; border-radius: 20px; background: #e3f0ff; }
+.report-form :is(select, input, textarea) { border-color: #d1dfec; border-radius: 16px; background: #fff; }
+
+/* Acciones principales y secundarias comparten formas y estados táctiles. */
+:is(.place-route, .route-start, .report-send, .report-copy, .category-results-empty button) {
+  min-height: 48px;
+  border-radius: 999px;
+}
+:is(.sheet-primary, .place-route, .route-start, .report-send, .category-result-actions .primary, .guided-route-controls button.guided-route-next) {
+  background: var(--finor-blue);
+  color: #fff;
+}
+:is(.map-search, .category-row, .place-group-trigger, .floor-tabs button, .more-about-trigger, .more-transport, .more-report, .more-refresh, .transport-line, .sheet-primary, .place-route, .route-start, .report-send, .report-copy) {
+  transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .24s var(--finor-motion);
+  -webkit-tap-highlight-color: transparent;
+}
+:is(.map-search, .category-row, .place-group-trigger, .floor-tabs button, .more-about-trigger, .more-transport, .more-report, .more-refresh, .transport-line):active {
+  background-color: #e7f1fc;
+}
+:is(.sheet-primary, .place-route, .route-start, .report-send, .report-copy):active { transform: scale(.98); }
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.map-search, .category-row, .place-group-trigger, .floor-tabs button, .more-about-trigger, .more-transport, .more-report, .more-refresh, .transport-line, .sheet-primary, .place-route, .route-start, .report-send, .report-copy) { transition: none; }
+  :is(.sheet-primary, .place-route, .route-start, .report-send, .report-copy):active { transform: none; }
+  .category-results-panel, .category-results-map .floating-gps-btn, .more-arrow { transition: none; }
+  .spinning, .spin { animation: none; }
+}
