@@ -88,3 +88,23 @@ test('la ruta sin foto conserva la indicación y permite continuar', async () =>
     await server.close();
   }
 });
+
+test('las líneas de San Miguel abren su recorrido y conservan sus paradas', async () => {
+  const server = await createServer({ server: { host: '127.0.0.1', port: 0 }, logLevel: 'silent' });
+  try {
+    await server.listen();
+    const { routeForLine } = await server.ssrLoadModule('/src/services/transportRoutes.js');
+    const route5 = routeForLine({ numero: '5', asociacion: 'San Miguel' });
+    assert.equal(route5.title, 'Línea 5');
+    assert.equal(route5.positions.length, 79);
+    assert.equal(route5.points[0].name, 'Parada Finor');
+    assert.equal(routeForLine({ numero: '8', asociacion: 'San Miguel' }).title, 'Línea 8 · Ida');
+    const route22 = routeForLine({ numero: '22', asociacion: 'Florida' });
+    assert.equal(route22.title, 'Línea 22');
+    assert.equal(route22.positions.length, 69);
+    assert.equal(routeForLine({ numero: '22', asociacion: 'San Miguel' }), null);
+    assert.equal(routeForLine({ numero: '5', asociacion: 'Otra asociación' }), null);
+  } finally {
+    await server.close();
+  }
+});

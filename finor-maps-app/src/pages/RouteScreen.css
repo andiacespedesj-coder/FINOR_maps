@@ -106,6 +106,18 @@
 .route-point-destination small { color: #71889a; font-size: .76rem; line-height: 1.4; }
 .route-approximation, .route-error { margin: 11px 0 0; color: #4b6c82; font-size: .75rem; line-height: 1.4; }
 .route-error { color: #a33235; }
+.route-nearby { display: flex; flex-direction: column; gap: 9px; margin-top: 22px; padding: 14px; border-radius: 18px; background: #f3f8fe; }
+.route-nearby-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #173b58; font-size: .83rem; }
+.route-nearby-heading span { color: #1269a8; font-size: .73rem; font-weight: 700; }
+.route-gps-map { height: 160px; overflow: hidden; border: 1px solid #d9e7f1; border-radius: 14px; background: #edf4f8; }
+.route-nearby-help { margin: 0; color: #526f84; font-size: .75rem; line-height: 1.45; }
+.route-nearby-list { display: flex; flex-direction: column; gap: 6px; }
+.route-nearby-list > strong { margin: 3px 0; color: #173b58; font-size: .8rem; }
+.route-nearby-list button { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 9px 10px; border: 1px solid #d6e5f0; border-radius: 12px; background: #f4f9ff; color: #164e78; text-align: left; }
+.route-nearby-list button[aria-pressed="true"] { border-color: #78b6df; background: #dfefff; }
+.route-nearby-list button svg { flex: none; }
+.route-nearby-list button span { flex: 1; font-size: .78rem; font-weight: 700; }
+.route-nearby-list button small { color: #55748a; font-size: .72rem; white-space: nowrap; }
 
 .route-state {
   display: flex;
@@ -138,10 +150,4 @@
 }
 .route-screen button:focus-visible, .route-screen select:focus-visible { outline: 3px solid #70bff0; outline-offset: 2px; }
 
-/* Vista previa de desarrollo: conserva su presentación independiente. */
-.route-preview { max-width: 560px; margin: 16px auto; padding: 18px; border: 1px solid #dce8f1; border-radius: 14px; background: #fff; }
-.route-preview-eyebrow { color: #1269a8; font-size: .7rem; font-weight: 800; letter-spacing: .06em; }
-.route-preview h2 { margin: 8px 0; font-size: 1.1rem; }
-.route-preview > p { margin: 0; color: #6b8395; font-size: .8rem; }
-
-@media (max-width: 560px) { .route-plan { min-height: calc(100dvh - 86px); } .route-preview { margin: 16px; } }
+@media (max-width: 560px) { .route-plan { min-height: calc(100dvh - 86px); } }

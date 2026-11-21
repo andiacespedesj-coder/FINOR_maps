@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { destinationNodesForPlace, findRoute, interactiveRouteInstructions, nearestOutdoorNode, nearestRoutableOutdoorNode, nodesForPlace, routeInstructions } from './navigation.js';
+import { destinationNodesForPlace, findRoute, interactiveRouteInstructions, nearbyRoutableOutdoorNodes, nearestOutdoorNode, nearestRoutableOutdoorNode, nodesForPlace, routeInstructions } from './navigation.js';
 
 const node = (id, place = null, coordinates = null, type = 'ENTRADA', floor = null) => ({
   id,
@@ -73,6 +73,22 @@ test('GPS elige un nodo cercano que sí permite llegar al destino', () => {
   const destination = nodesForPlace(nodes, 20);
   assert.equal(nearestRoutableOutdoorNode(nodes, [edge(1, 3, 5), edge(2, 3, 20)], position, destination)?.node.id, 2);
   assert.equal(nearestRoutableOutdoorNode(nodes, [edge(2, 3, 20)], position, destination, 2), null);
+});
+
+test('las opciones GPS muestran solo entradas cercanas conectadas, ordenadas por distancia', () => {
+  const nodes = [
+    node(1, null, [-63.2688, -17.3385], 'ENTRADA'),
+    node(2, null, [-63.2689, -17.3385], 'ENTRADA'),
+    node(3, null, [-63.2690, -17.3385], 'ENTRADA'),
+    node(4, null, [-63.2688, -17.3385], 'GRADA'),
+    node(5, 20),
+  ];
+  const connections = [edge(2, 5, 10), edge(3, 5, 20), edge(4, 5, 10)];
+  const options = nearbyRoutableOutdoorNodes(nodes, connections, { lat: -17.3385, lng: -63.2688 }, [nodes[4]]);
+  assert.deepEqual(options.map(({ node: item }) => item.id), [2, 3]);
+  assert.ok(options[0].distance < options[1].distance);
+  assert.deepEqual(nearbyRoutableOutdoorNodes(nodes, connections, { lat: -17.33, lng: -63.26 }, [nodes[4]]), []);
+  assert.deepEqual(nearbyRoutableOutdoorNodes(nodes, connections, { lat: -17.3385, lng: -63.2688 }, []), []);
 });
 
 test('las indicaciones incluyen fotos y distancia cuando existen', () => {

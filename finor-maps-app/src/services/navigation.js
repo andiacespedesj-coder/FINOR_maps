@@ -76,17 +76,21 @@ export function nearestOutdoorNode(nodes, position, maxDistanceMeters = 120) {
   return candidates[0]?.distance <= maxDistanceMeters ? candidates[0] : null;
 }
 
-export function nearestRoutableOutdoorNode(nodes, connections, position, destinationNodes, maxDistanceMeters = 120) {
-  if (!position || !Number.isFinite(position.lat) || !Number.isFinite(position.lng)) return null;
-  const candidates = nodes
+export function nearbyRoutableOutdoorNodes(nodes, connections, position, destinationNodes, maxDistanceMeters = 120) {
+  if (!position || !Number.isFinite(position.lat) || !Number.isFinite(position.lng) || !destinationNodes.length) return [];
+  return nodes
     .filter((node) => ['ENTRADA', 'SALIDA'].includes(properties(node).tipo))
     .map((node) => {
       const point = pointCoordinates(node);
       return point ? { node, distance: metersBetween(position, point) } : null;
     })
     .filter((candidate) => candidate && candidate.distance <= maxDistanceMeters)
-    .sort((a, b) => a.distance - b.distance);
-  return candidates.find(({ node }) => findRoute(nodes, connections, [node], destinationNodes)) || null;
+    .sort((a, b) => a.distance - b.distance)
+    .filter(({ node }) => findRoute(nodes, connections, [node], destinationNodes));
+}
+
+export function nearestRoutableOutdoorNode(nodes, connections, position, destinationNodes, maxDistanceMeters = 120) {
+  return nearbyRoutableOutdoorNodes(nodes, connections, position, destinationNodes, maxDistanceMeters)[0] || null;
 }
 
 export function findRoute(nodes, connections, originNodes, destinationNodes) {

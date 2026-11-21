@@ -5,34 +5,14 @@
 .transport-header h1 { margin: 7px 0 5px; font-size: 1.55rem; line-height: 1.15; letter-spacing: -.02em; }
 .transport-header p { max-width: 32ch; margin: 0; color: #d2e1ee; font-size: .82rem; line-height: 1.45; }
 .transport-content { padding: 22px 16px 0; }
-.transport-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 13px; }
-.transport-section-heading h2 { margin: 0; color: #183b59; font-size: 1.02rem; }
-.transport-section-heading > span { flex: none; color: #5c7286; font-size: .74rem; font-weight: 700; }
-.transport-filters { display: flex; gap: 7px; margin-bottom: 16px; overflow-x: auto; scrollbar-width: none; }
-.transport-filters::-webkit-scrollbar { display: none; }
-.transport-filters button { flex: none; min-height: 38px; padding: 0 13px; border: 1px solid #d8e6f0; border-radius: 100px; background: #fff; color: #41637e; font-size: .78rem; font-weight: 700; }
-.transport-filters button.selected { border-color: var(--finor-blue); background: var(--finor-blue); color: #fff; }
 .transport-lines { display: flex; flex-direction: column; gap: 9px; }
-.transport-line { display: flex; align-items: flex-start; gap: 12px; width: 100%; min-height: 92px; padding: 14px; border: 1px solid var(--finor-border); border-radius: 14px; background: #fff; box-shadow: 0 2px 9px rgba(23, 62, 95, .04); text-align: left; }
-.transport-line.selected { border-color: var(--finor-blue); box-shadow: 0 0 0 2px rgba(18, 99, 165, .1); }
+.transport-line { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 72px; padding: 12px 14px; border: 1px solid var(--finor-border); border-radius: 14px; background: #fff; box-shadow: 0 2px 9px rgba(23, 62, 95, .04); text-align: left; }
+.transport-line:disabled { cursor: default; }
 .transport-line-number { display: grid; flex: none; width: 48px; height: 48px; place-items: center; border-radius: 12px; background: var(--finor-blue); color: #fff; font-size: 1.1rem; font-weight: 800; }
-.transport-line-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.transport-line-copy { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; }
+.transport-line-arrow { flex: none; color: #64809a; }
 .transport-line-copy strong { color: #193b58; font-size: .92rem; }
 .transport-line-copy small { color: var(--finor-blue); font-size: .73rem; font-weight: 700; }
 .transport-line-copy > span { margin-top: 4px; color: #5a7083; font-size: .78rem; line-height: 1.4; }
-.transport-stops { margin-top: 26px; }
-.transport-map { height: 235px; overflow: hidden; border: 1px solid var(--finor-border); border-radius: 14px; background: #e4edf3; }
-.transport-marker { display: grid; place-items: center; border: 3px solid #fff; border-radius: 50%; background: var(--finor-blue); box-shadow: 0 2px 8px rgba(10, 46, 77, .35); }
-.transport-marker span { width: 9px; height: 9px; border-radius: 50%; background: #fff; }
-.transport-stop-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-.transport-stop-list article { display: flex; align-items: flex-start; gap: 9px; padding: 12px; border: 1px solid var(--finor-border); border-radius: 11px; background: #fff; }
-.transport-stop-list svg { flex: none; color: var(--finor-blue); }
-.transport-stop-list span { display: flex; flex-direction: column; gap: 3px; }
-.transport-stop-list strong { color: #1c3b56; font-size: .84rem; }
-.transport-stop-list small { color: var(--finor-muted); font-size: .75rem; line-height: 1.35; }
-.transport-stop-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 22px 20px; border: 1px dashed #c4d8e7; border-radius: 14px; background: #fff; text-align: center; }
-.transport-stop-empty svg { color: var(--finor-blue); }
-.transport-stop-empty strong { color: #24445e; font-size: .85rem; line-height: 1.35; }
-.transport-stop-empty p { margin: 0; color: var(--finor-muted); font-size: .77rem; line-height: 1.45; }
 .transport-note, .transport-loading, .transport-empty { margin: 17px 1px 0; color: var(--finor-muted); font-size: .76rem; line-height: 1.45; }
-.transport-back:focus-visible, .transport-filters button:focus-visible, .transport-line:focus-visible { outline: 2px solid var(--finor-blue); outline-offset: 2px; }
+.transport-back:focus-visible, .transport-line:focus-visible { outline: 2px solid var(--finor-blue); outline-offset: 2px; }

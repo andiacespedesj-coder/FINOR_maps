@@ -1,27 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Circle, CircleMarker, MapContainer, Polyline, Popup, TileLayer, useMap } from 'react-leaflet';
 import { ArrowLeft, LocateFixed, LoaderCircle } from 'lucide-react';
 import L from 'leaflet';
-import recorridoPrueba from '../assets/recorrido-prueba.json';
 import { getUserPosition } from '../services/geolocation';
+import { transportRoutes } from '../services/transportRoutes';
 import './TransportRouteScreen.css';
 
-const positions = recorridoPrueba.features[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-
-function FitRouteAndLocation({ location }) {
+function FitRouteAndLocation({ location, positions, points }) {
   const map = useMap();
 
   useEffect(() => {
-    const points = location ? [...positions, [location.lat, location.lng]] : positions;
-    map.fitBounds(L.latLngBounds(points), { padding: [38, 38], maxZoom: 17 });
-  }, [map, location]);
+    const bounds = [...positions, ...points.map((point) => point.position)];
+    if (location) bounds.push([location.lat, location.lng]);
+    map.fitBounds(L.latLngBounds(bounds), { padding: [38, 38], maxZoom: 17 });
+  }, [map, location, positions, points]);
 
   return null;
 }
 
-export default function TransportRouteScreen() {
+function TransportRouteMap({ route }) {
   const navigate = useNavigate();
+  const { positions, points } = route;
   const [location, setLocation] = useState(null);
   const [status, setStatus] = useState('Buscando tu ubicación…');
   const [locating, setLocating] = useState(true);
@@ -53,15 +53,16 @@ export default function TransportRouteScreen() {
   return <main className="transport-route-screen">
     <header className="transport-route-header">
       <button onClick={() => navigate('/transport')} aria-label="Volver a líneas de transporte"><ArrowLeft size={22} /></button>
-      <div><span>FINOR MAPS · VISTA DE PRUEBA</span><h1>Recorrido de prueba</h1></div>
+      <div><span>FINOR MAPS · TRANSPORTE</span><h1>{route.title}</h1></div>
     </header>
     <div className="transport-route-map" aria-label="Mapa del recorrido y tu ubicación">
       <MapContainer center={positions[0]} zoom={15} scrollWheelZoom style={{ height: '100%', width: '100%' }}>
-        <FitRouteAndLocation location={location} />
+        <FitRouteAndLocation location={location} positions={positions} points={points} />
         <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maxNativeZoom={19} />
-        <Polyline positions={positions} pathOptions={{ color: '#d53030', weight: 5 }} />
-        <CircleMarker center={positions[0]} radius={7} pathOptions={{ color: '#fff', weight: 3, fillColor: '#198754', fillOpacity: 1 }}><Popup>Inicio del trazado</Popup></CircleMarker>
-        <CircleMarker center={positions[positions.length - 1]} radius={7} pathOptions={{ color: '#fff', weight: 3, fillColor: '#d53030', fillOpacity: 1 }}><Popup>Fin del trazado</Popup></CircleMarker>
+        <Polyline positions={positions} pathOptions={{ color: '#075eae', weight: 5 }} />
+        <CircleMarker center={positions[0]} radius={7} pathOptions={{ color: '#fff', weight: 3, fillColor: '#064478', fillOpacity: 1 }}><Popup>Inicio del trazado</Popup></CircleMarker>
+        <CircleMarker center={positions[positions.length - 1]} radius={7} pathOptions={{ color: '#fff', weight: 3, fillColor: '#2994ce', fillOpacity: 1 }}><Popup>Fin del trazado</Popup></CircleMarker>
+        {points.map((point, index) => <CircleMarker key={`${point.name}-${index}`} center={point.position} radius={8} pathOptions={{ color: '#fff', weight: 3, fillColor: '#003c70', fillOpacity: 1 }}><Popup>{point.name}</Popup></CircleMarker>)}
         {location && <>
           {Number.isFinite(location.accuracy) && location.accuracy > 0 && <Circle center={[location.lat, location.lng]} radius={location.accuracy} pathOptions={{ color: '#1976d2', weight: 1, fillOpacity: 0.12 }} />}
           <CircleMarker center={[location.lat, location.lng]} radius={9} pathOptions={{ color: '#fff', weight: 3, fillColor: '#1976d2', fillOpacity: 1 }}><Popup>Tu ubicación aproximada</Popup></CircleMarker>
@@ -73,4 +74,12 @@ export default function TransportRouteScreen() {
       </button>
     </div>
   </main>;
+}
+
+export default function TransportRouteScreen() {
+  const { routeId } = useParams();
+  const navigate = useNavigate();
+  const route = Object.hasOwn(transportRoutes, routeId) ? transportRoutes[routeId] : null;
+  if (!route) return <main className="transport-screen detail-state"><p>Recorrido no disponible.</p><button onClick={() => navigate('/transport')}>Volver a transporte</button></main>;
+  return <TransportRouteMap key={route.id} route={route} />;
 }

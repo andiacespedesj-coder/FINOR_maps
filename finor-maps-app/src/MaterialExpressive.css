@@ -30,7 +30,7 @@
 .sheet-thumbnail { border-radius: 18px; }
 .sheet-close { background: #e9f0f8; }
 .sheet-primary { min-height: 50px; border-radius: 999px; }
-:is(.map-gps-status, .map-network-notice, .map-active-filter) { border-radius: 16px; }
+:is(.map-network-notice, .map-active-filter) { border-radius: 16px; }
 
 /* Navegación, categorías y resultados de búsqueda. */
 .categories-header { padding: max(28px, env(safe-area-inset-top)) 20px 28px; background: var(--finor-header-gradient); color: #123858; }
@@ -83,12 +83,15 @@
 /* Información, transporte y formulario. */
 .more-header { padding: max(26px, env(safe-area-inset-top)) 20px 24px; background: var(--finor-header-gradient); color: #123858; box-shadow: none; }
 .more-header h1 { font-size: 1.8rem; font-weight: 750; letter-spacing: -.035em; text-align: left; }
-.more-list-item, .transport-line, .transport-stop-list article { border: 0; border-radius: 22px; background: var(--finor-surface); box-shadow: none; }
-.more-about-trigger { border-radius: 22px; }
-.transport-line.selected { border: 0; background: #e5f1ff; box-shadow: inset 0 0 0 2px #9cc8e9; }
+.more-list-item, .transport-line { border: 0; border-radius: 22px; background: var(--finor-surface); box-shadow: none; }
 .transport-line-number { border-radius: 16px; }
-.transport-filters button { min-height: 42px; }
-.transport-map, .transport-stop-empty { border-radius: 22px; }
+.transport-screen { background: linear-gradient(180deg, #e4f1ff 0%, #f3f8ff 40%, #f8fbff 100%); }
+.transport-header, .transport-route-header { background: linear-gradient(125deg, #bcdcff 0%, #d7ebff 55%, #eef7ff 100%); color: #123858; }
+.transport-header > span, .transport-route-header span { color: #15598c; }
+.transport-header p { color: #496982; }
+.transport-line { background: linear-gradient(135deg, #fff 0%, #eaf4ff 100%); }
+.transport-line-number { background: linear-gradient(135deg, #0878c8, #075291); }
+.transport-route-locate { background: linear-gradient(135deg, #fff, #dceeff); }
 .report-intro { border: 0; border-radius: 20px; background: #e3f0ff; }
 .report-form :is(select, input, textarea) { border-color: #d1dfec; border-radius: 16px; background: #fff; }
 
@@ -101,17 +104,17 @@
   background: var(--finor-blue);
   color: #fff;
 }
-:is(.map-search, .category-row, .place-group-trigger, .floor-tabs button, .more-about-trigger, .more-transport, .more-report, .more-refresh, .transport-line, .sheet-primary, .place-route, .route-start, .report-send, .report-copy) {
+:is(.map-search, .category-row, .place-group-trigger, .floor-tabs button, .more-navigation, .more-transport, .more-report, .more-refresh, .transport-line, .sheet-primary, .place-route, .route-start, .report-send, .report-copy) {
   transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .24s var(--finor-motion);
   -webkit-tap-highlight-color: transparent;
 }
-:is(.map-search, .category-row, .place-group-trigger, .floor-tabs button, .more-about-trigger, .more-transport, .more-report, .more-refresh, .transport-line):active {
+:is(.map-search, .category-row, .place-group-trigger, .floor-tabs button, .more-navigation, .more-transport, .more-report, .more-refresh, .transport-line):active {
   background-color: #e7f1fc;
 }
 :is(.sheet-primary, .place-route, .route-start, .report-send, .report-copy):active { transform: scale(.98); }
 
 @media (prefers-reduced-motion: reduce) {
-  :is(.map-search, .category-row, .place-group-trigger, .floor-tabs button, .more-about-trigger, .more-transport, .more-report, .more-refresh, .transport-line, .sheet-primary, .place-route, .route-start, .report-send, .report-copy) { transition: none; }
+  :is(.map-search, .category-row, .place-group-trigger, .floor-tabs button, .more-navigation, .more-transport, .more-report, .more-refresh, .transport-line, .sheet-primary, .place-route, .route-start, .report-send, .report-copy) { transition: none; }
   :is(.sheet-primary, .place-route, .route-start, .report-send, .report-copy):active { transform: none; }
   .category-results-panel, .category-results-map .floating-gps-btn, .more-arrow { transition: none; }
   .spinning, .spin { animation: none; }

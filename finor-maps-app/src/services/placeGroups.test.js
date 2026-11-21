@@ -17,8 +17,8 @@ test('un piso con una carrera agrupa aulas, carrera y baños sin perder lugares'
     place(7, 'Sala de Estudio', 'Sala de Estudio'),
   ];
   const groups = groupFloorPlaces(places);
-  assert.deepEqual(groups.map((group) => group.title), ['Aulas', 'Carrera de Ingeniería en Sistemas', 'Baños']);
-  assert.deepEqual(groups.map((group) => group.places.map((item) => item.id)), [[1, 2], [4, 5, 6, 7], [3]]);
+  assert.deepEqual(groups.map((group) => group.title), ['Carrera de Ingeniería en Sistemas', 'Aulas', 'Laboratorios', 'Baños']);
+  assert.deepEqual(groups.map((group) => group.places.map((item) => item.id)), [[4, 5, 7], [1, 2], [6], [3]]);
 });
 
 test('con varias carreras conserva aparte los ambientes sin relación identificable', () => {
@@ -32,7 +32,20 @@ test('con varias carreras conserva aparte los ambientes sin relación identifica
   const groups = groupFloorPlaces(places, [{ activo: true, lugar: 5, carrera_nombre: 'Sistemas' }]);
   assert.deepEqual(groups.find((group) => group.title === 'Carrera de Sistemas').places.map((item) => item.id), [1, 5]);
   assert.deepEqual(groups.find((group) => group.title === 'Carrera de Derecho').places.map((item) => item.id), [2, 3]);
-  assert.deepEqual(groups.find((group) => group.title === 'Laboratorio').places.map((item) => item.id), [4]);
+  assert.deepEqual(groups.find((group) => group.title === 'Laboratorios').places.map((item) => item.id), [4]);
+});
+
+test('usa la carrera vinculada a la unidad aunque el nombre del lugar sea distinto', () => {
+  const places = [
+    place(1, 'Carrera de Ciencias en la Educación', 'Carreras'),
+    place(2, 'Sala de Cómputo C.E', 'Laboratorio'),
+    place(3, 'Aula 02 C.E', 'Aula'),
+  ];
+  const groups = groupFloorPlaces(places, [{ activo: true, lugar: 1, carrera_nombre: 'Ciencias de la Educación' }]);
+  assert.deepEqual(groups.map((group) => group.title), ['Carrera de Ciencias en la Educación', 'Aulas', 'Laboratorios']);
+  assert.deepEqual(groups[0].places.map((item) => item.id), [1]);
+  assert.deepEqual(placeRowsForGroup(groups[0]).map((row) => row.title), ['Información general']);
+  assert.deepEqual(groups[2].places.map((item) => item.id), [2]);
 });
 
 test('un piso sin carreras agrupa por categoría y mantiene lugares sin categoría', () => {
@@ -44,7 +57,7 @@ test('un piso sin carreras agrupa por categoría y mantiene lugares sin categor�
     place(5, 'Otro', ''),
   ]);
   assert.deepEqual(groups.map((group) => [group.title, group.places.length]), [
-    ['Aulas', 1], ['Baños', 1], ['Laboratorio', 2], ['Otros lugares', 1],
+    ['Otros lugares', 1], ['Aulas', 1], ['Laboratorios', 2], ['Baños', 1],
   ]);
 });
 
@@ -58,6 +71,6 @@ test('simplifica los títulos de la carrera y agrupa nombres repetidos conservan
   ];
   const group = groupFloorPlaces(places)[0];
   const rows = placeRowsForGroup(group);
-  assert.deepEqual(rows.map((row) => row.title), ['Información general', 'Centro interno', 'Dirección de carrera', 'Laboratorio 1']);
+  assert.deepEqual(rows.map((row) => row.title), ['Información general', 'Centro interno', 'Dirección de carrera']);
   assert.deepEqual(rows[2].places.map((item) => item.id), [3, 4]);
 });

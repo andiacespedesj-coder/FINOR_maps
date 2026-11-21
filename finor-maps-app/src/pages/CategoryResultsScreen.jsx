@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Building2, ChevronRight, Clock3, ImageOff, LoaderCircle, MapPin, Route, Search, X } from 'lucide-react';
 import { fetchBuildings, fetchCategorias, fetchPlaces } from '../services/catalogApi';
 import MapView from '../components/MapView';
 import PlaceIcon from '../components/PlaceIcon';
+import { SHEET_HEIGHTS, clampSheetHeight, snapSheetHeight } from '../services/sheetGestures';
 import './CategoryResultsScreen.css';
 
 const normalize = (value = '') => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -28,7 +29,45 @@ export default function CategoryResultsScreen() {
   const [query, setQuery] = useState('');
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [selectedItemId, setSelectedItemId] = useState(null);
-  const [expanded, setExpanded] = useState(false);
+  const [panelHeight, setPanelHeight] = useState(58);
+  const [snappedHeight, setSnappedHeight] = useState(58);
+  const [dragging, setDragging] = useState(false);
+  const screenRef = useRef(null);
+  const dragRef = useRef(null);
+  const ignoreClick = useRef(false);
+
+  const setPanelSnap = (height) => {
+    setPanelHeight(height);
+    setSnappedHeight(height);
+  };
+
+  const startDrag = (event) => {
+    if (event.button !== 0 || !screenRef.current) return;
+    dragRef.current = { id: event.pointerId, startY: event.clientY, startHeight: snappedHeight, height: snappedHeight, screenHeight: screenRef.current.clientHeight, startTime: performance.now(), moved: false };
+    ignoreClick.current = false;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const moveDrag = (event) => {
+    const drag = dragRef.current;
+    if (!drag || drag.id !== event.pointerId || !drag.screenHeight) return;
+    const distance = drag.startY - event.clientY;
+    if (!drag.moved && Math.abs(distance) < 8) return;
+    drag.moved = true;
+    drag.height = clampSheetHeight(drag.startHeight + distance / drag.screenHeight * 100);
+    setDragging(true);
+    setPanelHeight(drag.height);
+  };
+
+  const endDrag = (event, cancelled = false) => {
+    const drag = dragRef.current;
+    if (!drag || drag.id !== event.pointerId) return;
+    dragRef.current = null;
+    setDragging(false);
+    if (!drag.moved) return;
+    ignoreClick.current = !cancelled;
+    setPanelSnap(cancelled ? drag.startHeight : snapSheetHeight(drag.height, drag.startHeight, performance.now() - drag.startTime));
+  };
 
   useEffect(() => {
     let active = true;
@@ -73,15 +112,15 @@ export default function CategoryResultsScreen() {
 
   const selectResult = (item) => {
     setSelectedItemId(item.id);
-    setExpanded(false);
+    setPanelSnap(58);
     document.getElementById(`category-result-${item.id}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   };
 
   return (
-    <main className={`category-results-screen${expanded ? ' is-expanded' : ''}`}>
+    <main ref={screenRef} className={`category-results-screen${dragging ? ' is-dragging' : ''}`} style={{ '--category-panel-height': `${panelHeight}%` }}>
       <div className="category-results-map" aria-label="Mapa del campus">
         <MapView
-          bottomOverlayFraction={0.58}
+          bottomOverlayFraction={snappedHeight / 100}
           activeCategoryId={buildingsCategory ? null : Number(id)}
           selectedBuildingId={selectedBuildingId}
           selectedPlaceId={buildingsCategory ? null : activeSelectedItemId}
@@ -95,7 +134,17 @@ export default function CategoryResultsScreen() {
       <button className="category-map-back" onClick={() => navigate('/categories')} aria-label="Volver a lugares"><ArrowLeft size={21} /></button>
 
       <section className="category-results-panel" aria-label={`Resultados de ${category?.nombre || 'la categoría'}`}>
-        <button className="category-results-grip-button" onClick={() => setExpanded((current) => !current)} aria-label={expanded ? 'Mostrar más mapa' : 'Mostrar más resultados'} aria-expanded={expanded}><span /></button>
+        <button className="category-results-grip-button"
+          onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={(event) => endDrag(event, true)} onLostPointerCapture={(event) => endDrag(event, true)}
+          onClick={() => { if (ignoreClick.current) { ignoreClick.current = false; return; } setPanelSnap(snappedHeight === 82 ? 58 : 82); }}
+          onKeyDown={(event) => {
+            if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+            event.preventDefault();
+            const index = SHEET_HEIGHTS.indexOf(snappedHeight);
+            setPanelSnap(SHEET_HEIGHTS[Math.max(0, Math.min(SHEET_HEIGHTS.length - 1, index + (event.key === 'ArrowUp' ? 1 : -1)))]);
+          }}
+          aria-label={snappedHeight === 82 ? 'Mostrar más mapa. También puedes deslizar el panel.' : 'Mostrar más resultados. También puedes deslizar el panel.'}
+          aria-expanded={snappedHeight === 82}><span /></button>
         <header className="category-results-header">
           <div className="category-results-title-row"><div><span>EXPLORA FINOR</span><h1>{category?.nombre || 'Lugares'}</h1></div><small>{results.length} {results.length === 1 ? 'resultado' : 'resultados'}</small></div>
           <label className="category-results-search"><Search size={19} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar en esta categoría" aria-label="Buscar en esta categoría" />{query && <button onClick={() => setQuery('')} aria-label="Limpiar búsqueda"><X size={17} /></button>}</label>

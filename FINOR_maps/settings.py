@@ -192,5 +192,26 @@ if platform.system() == 'Windows':
 LEAFLET_CONFIG = {
     'DEFAULT_CENTER': (-17.33848, -63.26879),
     'DEFAULT_ZOOM': 18,
+    'MAX_ZOOM': 22,
+    'TILES': [
+        (
+            'Satélite',
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            {
+                'maxNativeZoom': 17,
+                'maxZoom': 22,
+                'attribution': 'Imágenes &copy; Esri, Maxar, Earthstar Geographics y la comunidad GIS',
+            },
+        ),
+        (
+            'Calles',
+            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            {
+                'maxNativeZoom': 19,
+                'maxZoom': 22,
+                'attribution': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            },
+        ),
+    ],
 }
 

@@ -10,12 +10,9 @@ const initialLines = [
 
 export async function fetchTransportDirectory() {
   try {
-    const [lines, stops] = await Promise.all([
-      request('/lineas-transporte/'),
-      request('/paradas-transporte/'),
-    ]);
-    return { lines, stops: stops.features || [], provisional: false };
+    const lines = await request('/lineas-transporte/');
+    return { lines, provisional: false };
   } catch {
-    return { lines: initialLines, stops: [], provisional: true };
+    return { lines: initialLines, provisional: true };
   }
 }

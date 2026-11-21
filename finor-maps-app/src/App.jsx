@@ -7,10 +7,10 @@ import CategoryResultsScreen from './pages/CategoryResultsScreen';
 import DetailScreen from './pages/DetailScreen';
 import RouteScreen from './pages/RouteScreen';
 import MoreScreen from './pages/MoreScreen';
+import { AboutScreen, AuthoritiesScreen } from './pages/InfoDetailsScreen';
 import TransportScreen from './pages/TransportScreen';
 import TransportRouteScreen from './pages/TransportRouteScreen';
 import ReportScreen from './pages/ReportScreen';
-import GuidedRoutePreview from './pages/GuidedRoutePreview';
 import BottomNav from './components/BottomNav';
 import SplashScreen from './components/SplashScreen';
 import './App.css';
@@ -37,10 +37,11 @@ function AppContent() {
           <Route path="/detail/:id" element={<DetailScreen />} />
           <Route path="/route/:placeId" element={<RouteScreen />} />
           <Route path="/more" element={<MoreScreen />} />
+          <Route path="/more/authorities" element={<AuthoritiesScreen />} />
+          <Route path="/more/about" element={<AboutScreen />} />
           <Route path="/transport" element={<TransportScreen />} />
-          <Route path="/transport/recorrido-prueba" element={<TransportRouteScreen />} />
+          <Route path="/transport/:routeId" element={<TransportRouteScreen />} />
           <Route path="/report" element={<ReportScreen />} />
-          {import.meta.env.DEV && <Route path="/preview/ruta" element={<GuidedRoutePreview />} />}
         </Routes>
       </div>
       {showNavigation && <BottomNav />}

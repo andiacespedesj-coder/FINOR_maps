@@ -2,10 +2,16 @@ const normalize = (value = '') => String(value || '')
   .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 const careerName = (value = '') => String(value).trim().replace(/^carreras?\s+(?:(?:de|del)\s+)?/i, '');
+const standaloneGroups = {
+  classrooms: { title: 'Aulas', icon: 'DoorOpen' },
+  laboratories: { title: 'Laboratorios', icon: 'FlaskConical' },
+  bathrooms: { title: 'Baños', icon: 'Droplets' },
+};
 
 function placeType(place) {
   const category = normalize(place.properties?.categoria_nombre);
   if (/^aulas?(?:\b|$)/.test(category)) return 'classrooms';
+  if (/^laboratorios?(?:\b|$)/.test(category)) return 'laboratories';
   if (/^banos?(?:\b|$)/.test(category)) return 'bathrooms';
   if (/^carreras?$/.test(category)) return 'career';
   return 'other';
@@ -13,6 +19,7 @@ function placeType(place) {
 
 export function groupFloorPlaces(places, units = []) {
   const careers = new Map();
+  const careerUnitForPlace = (place) => units.find((unit) => unit.activo && unit.carrera_nombre && String(unit.lugar) === String(place.id));
   const addCareer = (name, title) => {
     const key = normalize(careerName(name));
     if (key && !careers.has(key)) careers.set(key, { id: `career:${key}`, title, icon: 'GraduationCap', places: [] });
@@ -20,7 +27,8 @@ export function groupFloorPlaces(places, units = []) {
 
   for (const place of places) {
     if (placeType(place) === 'career' && place.properties?.nombre) {
-      addCareer(place.properties.nombre, place.properties.nombre);
+      const relatedUnit = careerUnitForPlace(place);
+      addCareer(relatedUnit?.carrera_nombre || place.properties.nombre, place.properties.nombre);
     }
   }
   for (const unit of units) {
@@ -38,17 +46,15 @@ export function groupFloorPlaces(places, units = []) {
   for (const place of places) {
     const properties = place.properties || {};
     const type = placeType(place);
-    if (type === 'classrooms' || type === 'bathrooms') {
-      append(type === 'classrooms'
-        ? { id: 'classrooms', title: 'Aulas', icon: 'DoorOpen', places: [] }
-        : { id: 'bathrooms', title: 'Baños', icon: 'Droplets', places: [] }, place);
+    if (standaloneGroups[type]) {
+      append({ id: type, ...standaloneGroups[type], places: [] }, place);
       continue;
     }
 
-    const relatedUnit = units.find((unit) => unit.activo && unit.carrera_nombre && String(unit.lugar) === String(place.id));
+    const relatedUnit = careerUnitForPlace(place);
     const normalizedName = normalize(properties.nombre);
-    let career = type === 'career' ? careers.get(normalize(careerName(properties.nombre))) : null;
-    if (!career && relatedUnit) career = careers.get(normalize(careerName(relatedUnit.carrera_nombre)));
+    let career = relatedUnit ? careers.get(normalize(careerName(relatedUnit.carrera_nombre))) : null;
+    if (!career && type === 'career') career = careers.get(normalize(careerName(properties.nombre)));
     if (!career) {
       const matches = [...careers.entries()].filter(([name]) => normalizedName.includes(name));
       if (matches.length === 1) career = matches[0][1];
@@ -63,7 +69,7 @@ export function groupFloorPlaces(places, units = []) {
     }
   }
 
-  const priority = (group) => group.id === 'classrooms' ? 0 : group.id.startsWith('career:') ? 1 : group.id === 'bathrooms' ? 2 : 3;
+  const priority = (group) => group.id.startsWith('career:') ? 0 : group.id === 'classrooms' ? 2 : group.id === 'laboratories' ? 3 : group.id === 'bathrooms' ? 4 : 1;
   return [...groups.values()].sort((a, b) => priority(a) - priority(b) || a.title.localeCompare(b.title, 'es'));
 }
 
@@ -76,7 +82,7 @@ export function placeRowsForGroup(group) {
     const originalName = properties.nombre || 'Lugar';
     const normalizedName = normalize(originalName);
     let title = originalName;
-    if (career && placeType(place) === 'career' && normalize(careerName(originalName)) === career) {
+    if (career && placeType(place) === 'career') {
       title = 'Información general';
     } else if (career && normalizedName.endsWith(career) && normalizedName !== career) {
       const prefix = originalName.slice(0, originalName.length - career.length).replace(/\s+(?:de|del)\s*$/i, '').trim();

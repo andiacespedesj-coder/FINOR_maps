@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, LoaderCircle, MapPin } from 'lucide-react';
+import { ChevronRight, LoaderCircle } from 'lucide-react';
 import { fetchCategorias } from '../services/catalogApi';
 import PlaceIcon from '../components/PlaceIcon';
 import './CategoriesScreen.css';
@@ -40,7 +40,6 @@ export default function CategoriesScreen() {
           <span className="category-copy"><strong>{category.nombre}</strong><small>Explorar resultados</small></span>
           <ChevronRight size={20} aria-hidden="true" />
         </button>)}
-        {!loading && !error && <div className="categories-hint"><MapPin size={19} /><span>También puedes tocar un edificio directamente en el mapa.</span></div>}
       </section>
     </main>
   );

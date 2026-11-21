@@ -26,5 +26,3 @@
 .category-copy strong { color: #17334e; font-size: .94rem; }
 .category-copy small { color: var(--finor-muted); font-size: .76rem; }
 .categories-state { display: flex; align-items: center; gap: 8px; padding: 18px 4px; color: var(--finor-muted); font-size: .88rem; }
-.categories-hint { display: flex; align-items: flex-start; gap: 9px; margin: 24px 4px 0; color: var(--finor-muted); font-size: .8rem; line-height: 1.45; }
-.categories-hint svg { flex: none; color: var(--finor-blue); }

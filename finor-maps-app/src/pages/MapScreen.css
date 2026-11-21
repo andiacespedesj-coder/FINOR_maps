@@ -118,8 +118,6 @@
 }
 .has-selection .map-network-notice { bottom: calc(50% + 72px); }
 
-.map-gps-status { position: absolute; z-index: 900; right: 74px; bottom: 27px; left: 16px; width: fit-content; max-width: calc(100% - 100px); padding: 8px 10px; border: 1px solid var(--finor-border); border-radius: 8px; background: #fff; color: var(--finor-navy); font-size: .72rem; line-height: 1.25; font-weight: 700; box-shadow: 0 2px 8px rgba(11, 58, 112, .13); }
-.has-selection .map-gps-status { bottom: calc(50% + 17px); }
 
 .building-sheet {
   position: absolute;

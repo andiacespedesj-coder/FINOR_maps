@@ -7,7 +7,7 @@
     "dev": "vite",
     "check:dev": "node scripts/check-dev-server.mjs",
     "check:route": "node scripts/check-place-route.mjs",
-    "test": "node --test src/services/navigation.test.js src/services/catalogData.test.mjs src/services/photoArrows.test.js src/services/placeGroups.test.js src/pages/viewPresentation.test.mjs",
+    "test": "node --test src/services/navigation.test.js src/services/catalogData.test.mjs src/services/photoArrows.test.js src/services/placeGroups.test.js src/services/sheetGestures.test.js src/pages/viewPresentation.test.mjs",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"

@@ -1,10 +1,10 @@
-import { MapContainer, TileLayer, GeoJSON, Tooltip, Marker, Circle, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, Tooltip, Marker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { fetchCampusMap } from '../services/catalogApi';
 import { getApiHelpMessage } from '../services/httpClient';
-import { getUserPosition } from '../services/geolocation';
+import { getUserPosition, locationErrorMessage } from '../services/geolocation';
 import { FINOR_BOUNDS, FINOR_CENTER } from '../services/mapCoordinates';
 import { Navigation, Loader2, WifiOff } from 'lucide-react';
 
@@ -60,13 +60,19 @@ const MapController = ({ userLocation, shouldFlyToUser, onFlyComplete, selectedB
   // Centrar suavemente en el usuario cuando se solicita
   useEffect(() => {
     if (shouldFlyToUser && userLocation) {
-      map.flyTo([userLocation.lat, userLocation.lng], 19, {
+      const zoom = userLocation.accuracy == null || userLocation.accuracy > 35 ? 17 : 19;
+      const point = [userLocation.lat, userLocation.lng];
+      map.setMaxBounds(L.latLngBounds(FINOR_BOUNDS).extend(point).pad(0.15));
+      const center = bottomOverlayFraction
+        ? map.unproject(map.project(point, zoom).add(L.point(0, map.getSize().y * bottomOverlayFraction / 2)), zoom)
+        : point;
+      map.flyTo(center, zoom, {
         duration: 1.2,
         easeLinearity: 0.25
       });
       if (onFlyComplete) onFlyComplete();
     }
-  }, [shouldFlyToUser, userLocation, map, onFlyComplete]);
+  }, [shouldFlyToUser, userLocation, map, onFlyComplete, bottomOverlayFraction]);
 
   useEffect(() => {
     if (!selectedPlace?.geometry) flyToFeature(selectedBuilding);
@@ -87,6 +93,11 @@ const MapView = ({ onBuildingSelect, onPlaceSelect, selectedBuildingId, selected
   const [shouldFly, setShouldFly] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [locationError, setLocationError] = useState('');
+  const mapBounds = useMemo(() => {
+    const bounds = L.latLngBounds(FINOR_BOUNDS);
+    if (userLocation) bounds.extend([userLocation.lat, userLocation.lng]);
+    return bounds.pad(0.15);
+  }, [userLocation]);
   const selectedBuilding = buildings.find((building) => building.id === selectedBuildingId);
   const selectedPlace = places.find((place) => place.id === selectedPlaceId);
 
@@ -114,7 +125,7 @@ const MapView = ({ onBuildingSelect, onPlaceSelect, selectedBuildingId, selected
 
     } catch (err) {
       console.warn("No se pudo obtener ubicación GPS:", err.message);
-      setLocationError('No se pudo obtener tu ubicación. Revisa el permiso de ubicación del dispositivo.');
+      setLocationError(locationErrorMessage(err));
     } finally {
       setIsLocating(false);
     }
@@ -127,7 +138,7 @@ const MapView = ({ onBuildingSelect, onPlaceSelect, selectedBuildingId, selected
         zoom={18}
         minZoom={16}
         maxZoom={22}
-        maxBounds={FINOR_BOUNDS}
+        maxBounds={mapBounds}
         maxBoundsViscosity={0.9}
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
@@ -190,11 +201,9 @@ const MapView = ({ onBuildingSelect, onPlaceSelect, selectedBuildingId, selected
               />
             ))}
 
-        {/* Posición GPS obtenida al pulsar el botón, con su margen de precisión. */}
+        {/* Posición GPS obtenida al pulsar el botón. */}
         {userLocation && (
           <>
-            <Circle center={[userLocation.lat, userLocation.lng]} radius={userLocation.accuracy}
-              pathOptions={{ color: '#1976d2', weight: 1, fillColor: '#1976d2', fillOpacity: .12 }} />
             <Marker position={[userLocation.lat, userLocation.lng]} icon={userGpsIcon} />
           </>
         )}
@@ -206,10 +215,6 @@ const MapView = ({ onBuildingSelect, onPlaceSelect, selectedBuildingId, selected
           <span>{loadError || locationError}</span>
         </div>
       )}
-
-      {userLocation && !locationError && <div className="map-gps-status" role="status">
-        Tu ubicación · precisión aproximada {Math.round(userLocation.accuracy)} m
-      </div>}
 
       {/* Botón Flotante para Centrar en "Mi Ubicación" */}
       <button

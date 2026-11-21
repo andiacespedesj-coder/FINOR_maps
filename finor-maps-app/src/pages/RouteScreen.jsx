@@ -1,15 +1,39 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, LoaderCircle, MapPin, Navigation, Route } from 'lucide-react';
+import { Circle, CircleMarker, MapContainer, Popup, TileLayer, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import { fetchPlaces } from '../services/catalogApi';
-import { getUserPosition } from '../services/geolocation';
-import { destinationNodesForPlace, findRoute, interactiveRouteInstructions, nearestRoutableOutdoorNode, nodesForPlace } from '../services/navigation';
+import { getUserPosition, locationErrorMessage } from '../services/geolocation';
+import { destinationNodesForPlace, findRoute, interactiveRouteInstructions, nearbyRoutableOutdoorNodes, nodesForPlace } from '../services/navigation';
 import { loadNavigationGraph } from '../services/navigationApi';
 import GuidedRouteView from '../components/GuidedRouteView';
 import './RouteScreen.css';
 
 const emptyGraph = { nodes: [], connections: [], photos: [] };
 const labelFor = (place) => [place.properties?.nombre, place.properties?.piso_nombre, place.properties?.edificio_nombre].filter(Boolean).join(' · ');
+
+function FitGpsMap({ position, candidates }) {
+  const map = useMap();
+  useEffect(() => {
+    const points = [[position.lat, position.lng], ...candidates.map(({ node }) => [node.geometry.coordinates[1], node.geometry.coordinates[0]])];
+    if (points.length === 1) map.setView(points[0], 18);
+    else map.fitBounds(L.latLngBounds(points), { padding: [25, 25], maxZoom: 18 });
+  }, [map, position, candidates]);
+  return null;
+}
+
+function OriginGpsMap({ position, candidates }) {
+  return <div className="route-gps-map" aria-label="Ubicación aproximada y puntos de inicio cercanos">
+    <MapContainer center={[position.lat, position.lng]} zoom={18} scrollWheelZoom={false} zoomControl={false} style={{ width: '100%', height: '100%' }}>
+      <FitGpsMap position={position} candidates={candidates} />
+      <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maxNativeZoom={19} />
+      {position.accuracy != null && <Circle center={[position.lat, position.lng]} radius={position.accuracy} pathOptions={{ color: '#1976d2', weight: 1, fillOpacity: .12 }} />}
+      <CircleMarker center={[position.lat, position.lng]} radius={9} pathOptions={{ color: '#fff', weight: 3, fillColor: '#1976d2', fillOpacity: 1 }}><Popup>Tu ubicación aproximada</Popup></CircleMarker>
+      {candidates.map(({ node }) => <CircleMarker key={node.id} center={[node.geometry.coordinates[1], node.geometry.coordinates[0]]} radius={7} pathOptions={{ color: '#fff', weight: 2, fillColor: '#064478', fillOpacity: 1 }}><Popup>{node.properties?.nombre || 'Punto de inicio'}</Popup></CircleMarker>)}
+    </MapContainer>
+  </div>;
+}
 
 export default function RouteScreen() {
   const { placeId } = useParams();
@@ -18,15 +42,15 @@ export default function RouteScreen() {
   const [graph, setGraph] = useState(emptyGraph);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
-  const [originMode, setOriginMode] = useState('gps');
   const [originChoice, setOriginChoice] = useState('');
-  const [gpsOrigin, setGpsOrigin] = useState(null);
+  const [gpsPosition, setGpsPosition] = useState(null);
   const [gpsBusy, setGpsBusy] = useState(false);
   const [gpsError, setGpsError] = useState('');
   const [stepIndex, setStepIndex] = useState(0);
   const [guiding, setGuiding] = useState(false);
-  const autoLocateAttempted = useRef(false);
   const gpsRequestId = useRef(0);
+
+  useEffect(() => () => { gpsRequestId.current += 1; }, []);
 
   useEffect(() => {
     let active = true;
@@ -52,23 +76,26 @@ export default function RouteScreen() {
     .filter((place) => String(place.id) !== placeId)
     .sort((a, b) => labelFor(a).localeCompare(labelFor(b), 'es')),
   [routablePlaces, placeId]);
+  const nearbyOrigins = useMemo(() => {
+    if (!gpsPosition) return [];
+    const radius = Math.max(120, Math.min(gpsPosition.accuracy ?? 120, 250));
+    return nearbyRoutableOutdoorNodes(graph.nodes, graph.connections, gpsPosition, destinationNodes, radius).slice(0, 5);
+  }, [gpsPosition, graph.nodes, graph.connections, destinationNodes]);
 
   const result = useMemo(() => {
     if (!destinationNodes.length || !graph.nodes.length || !graph.connections.length) return null;
-    const startNodes = originMode === 'gps'
-      ? (gpsOrigin ? [gpsOrigin.node] : [])
-      : (originNode ? [originNode] : originPlace ? nodesForPlace(graph.nodes, originPlace.id) : []);
+    const startNodes = originNode ? [originNode] : originPlace ? nodesForPlace(graph.nodes, originPlace.id) : [];
     if (!startNodes.length) return null;
     return findRoute(graph.nodes, graph.connections, startNodes, destinationNodes);
-  }, [destinationNodes, graph, originMode, gpsOrigin, originPlace, originNode]);
+  }, [destinationNodes, graph, originPlace, originNode]);
 
   const steps = useMemo(() => interactiveRouteInstructions(
     result,
     destinationName,
-    originMode === 'gps' ? gpsOrigin?.node.properties?.nombre : originNode?.properties?.nombre || originPlace?.properties?.nombre,
+    originNode?.properties?.nombre || originPlace?.properties?.nombre,
     graph,
     destinationNodes,
-  ), [result, destinationName, originMode, gpsOrigin, originPlace, originNode, graph, destinationNodes]);
+  ), [result, destinationName, originPlace, originNode, graph, destinationNodes]);
   const locateOrigin = useCallback(async () => {
     const requestId = ++gpsRequestId.current;
     setGpsBusy(true);
@@ -76,47 +103,35 @@ export default function RouteScreen() {
     try {
       const position = await getUserPosition();
       if (requestId !== gpsRequestId.current) return;
-      if (position.accuracy > 35) {
-        setGpsOrigin(null);
-        setOriginMode('manual');
-        setGpsError('El GPS no puede ubicarte con suficiente precisión. Elige el punto donde estás.');
-        return;
-      }
-      const nearest = nearestRoutableOutdoorNode(
-        graph.nodes, graph.connections, position, destinationNodes,
-      );
-      if (!nearest) {
-        setGpsOrigin(null);
-        setOriginMode('manual');
-        setGpsError('No hay un punto exterior cercano y conectado con este destino. Si estás dentro de un edificio, elige tu lugar de origen.');
-      } else {
-        setOriginMode('gps');
-        setGpsOrigin(nearest);
-        setStepIndex(0);
-        setGuiding(false);
-      }
-    } catch {
+      setGpsPosition(position);
+      setOriginChoice('');
+      setStepIndex(0);
+      setGuiding(false);
+    } catch (error) {
       if (requestId !== gpsRequestId.current) return;
-      setOriginMode('manual');
-      setGpsError('No se pudo obtener tu ubicación. Revisa el permiso de ubicación o elige tu lugar de origen.');
+      setGpsPosition(null);
+      setGpsError(locationErrorMessage(error));
     } finally {
       if (requestId === gpsRequestId.current) setGpsBusy(false);
     }
-  }, [graph.nodes, graph.connections, destinationNodes]);
+  }, []);
 
-  useEffect(() => {
-    if (loading || !destinationNodes.length || autoLocateAttempted.current) return;
-    autoLocateAttempted.current = true;
-    locateOrigin();
-  }, [loading, destinationNodes, locateOrigin]);
+  const chooseOrigin = (value) => {
+    gpsRequestId.current += 1;
+    setGpsBusy(false);
+    setOriginChoice(value);
+    setGpsError('');
+    setStepIndex(0);
+    setGuiding(false);
+  };
 
   let status = '';
   if (!loading && !loadError) {
     if (!destination) status = 'Este destino ya no está disponible.';
     else if (!graph.nodes.length || !graph.connections.length) status = 'Aún no hay recorridos disponibles en el campus.';
     else if (!destinationNodes.length) status = 'Este destino aún no tiene un recorrido registrado.';
-    else if (originMode === 'manual' && originPlace && !nodesForPlace(graph.nodes, originPlace.id).length) status = 'El lugar de inicio aún no tiene un recorrido registrado.';
-    else if ((originMode === 'manual' && originChoice || originMode === 'gps' && gpsOrigin) && !result) status = 'Aún no hay una ruta desde este punto. Prueba con otro inicio.';
+    else if (originPlace && !nodesForPlace(graph.nodes, originPlace.id).length) status = 'El lugar de inicio aún no tiene un recorrido registrado.';
+    else if (originChoice && !result) status = 'Aún no hay una ruta desde este punto. Prueba con otro inicio.';
   }
 
   if (guiding && steps.length) return <GuidedRouteView
@@ -128,9 +143,7 @@ export default function RouteScreen() {
       if (arrow.recommended) { setStepIndex((index) => index + 1); return; }
       gpsRequestId.current += 1;
       setGpsBusy(false);
-      setOriginMode('manual');
       setOriginChoice(`node:${arrow.nodo_destino}`);
-      setGpsOrigin(null);
       setStepIndex(0);
     }}
     onClose={() => setGuiding(false)}
@@ -148,14 +161,13 @@ export default function RouteScreen() {
           <span className="route-point-marker" aria-hidden="true" />
           <div className="route-point-content">
             <div className="route-point-heading"><label htmlFor="route-origin-place">Desde</label>
-              <button className="route-gps" onClick={locateOrigin} disabled={gpsBusy || loading || !destinationNodes.length || !graph.nodes.length} aria-label="Usar mi ubicación exterior">
+              <button className="route-gps" onClick={locateOrigin} disabled={gpsBusy} aria-label="Buscar mi ubicación aproximada">
                 {gpsBusy ? <LoaderCircle className="spin" size={16} /> : <Navigation size={16} />}
-                {gpsBusy ? 'Buscando…' : 'Usar GPS'}
+                {gpsBusy ? 'Buscando…' : 'Ubicarme'}
               </button>
             </div>
-            <select id="route-origin-place" value={originMode === 'manual' ? originChoice : ''}
-              onChange={(event) => { gpsRequestId.current += 1; setGpsBusy(false); setOriginMode('manual'); setOriginChoice(event.target.value); setGpsOrigin(null); setGpsError(''); setStepIndex(0); setGuiding(false); }}>
-              <option value="">{originMode === 'gps' && gpsOrigin ? `Cerca de ${gpsOrigin.node.properties?.nombre || 'tu ubicación'}` : gpsBusy ? 'Buscando tu ubicación…' : 'Elige tu punto de inicio'}</option>
+            <select id="route-origin-place" value={originChoice} onChange={(event) => chooseOrigin(event.target.value)}>
+              <option value="">Elige tu punto de inicio</option>
               {origins.length > 0 && <optgroup label="Lugares">
                 {origins.map((place) => <option key={place.id} value={`place:${place.id}`}>{labelFor(place)}</option>)}
               </optgroup>}
@@ -174,6 +186,20 @@ export default function RouteScreen() {
             {destination && <small>{[destination.properties?.piso_nombre, destination.properties?.edificio_nombre].filter(Boolean).join(' · ')}</small>}
           </div>
         </div>
+
+        {gpsPosition && <section className="route-nearby" aria-label="Ubicación y puntos cercanos">
+          <div className="route-nearby-heading"><strong>Tu ubicación</strong><span>{gpsPosition.accuracy == null ? 'Aproximada' : `± ${Math.round(gpsPosition.accuracy)} m`}</span></div>
+          <OriginGpsMap position={gpsPosition} candidates={nearbyOrigins} />
+          {loading && <p className="route-nearby-help">Buscando puntos cercanos…</p>}
+          {!loading && nearbyOrigins.length > 0 && <div className="route-nearby-list" role="group" aria-label="Puntos de inicio cercanos">
+            <strong>¿Desde dónde comienzas?</strong>
+            <p className="route-nearby-help">El GPS no identifica aulas ni pisos. Elige un punto que reconozcas.</p>
+            {nearbyOrigins.map(({ node, distance }) => <button key={node.id} type="button" aria-pressed={originChoice === `node:${node.id}`} onClick={() => chooseOrigin(`node:${node.id}`)}>
+              <MapPin size={16} /><span>{node.properties?.nombre || 'Punto de inicio'}</span><small>~{Math.round(distance)} m</small>
+            </button>)}
+          </div>}
+          {!loading && nearbyOrigins.length === 0 && <p className="route-nearby-help">No hay puntos cercanos para este destino. Elige un inicio de la lista.</p>}
+        </section>}
 
         {destinationResolution.approximate && <p className="route-approximation" role="status">Llegada aproximada: {destinationResolution.referenceName}</p>}
         {loading && <div className="route-state"><LoaderCircle className="spin" size={20} /><p>Cargando ruta…</p></div>}
