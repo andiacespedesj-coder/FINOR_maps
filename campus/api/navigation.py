@@ -18,5 +18,5 @@ class ConexionNavegacionViewSet(ReadOnlyCatalogViewSet):
 
 
 class FotoRutaViewSet(ReadOnlyCatalogViewSet):
-    queryset = FotoRuta.objects.select_related("nodo").prefetch_related("flechas__conexion")
+    queryset = FotoRuta.objects.select_related("nodo").prefetch_related("flechas__conexion", "flechas__foto")
     serializer_class = FotoRutaSerializer

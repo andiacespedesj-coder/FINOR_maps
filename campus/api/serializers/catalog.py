@@ -56,6 +56,9 @@ class EdificioSerializer(GeoFeatureModelSerializer):
     carreras_nombres = serializers.SerializerMethodField()
 
     def get_carreras_nombres(self, edificio):
+        carreras_map = self.context.get("carreras_por_edificio")
+        if carreras_map is not None:
+            return carreras_map.get(edificio.id, [])
         return list(
             Carrera.objects.filter(
                 aliases_lugares__lugar__piso__edificio=edificio,

@@ -43,15 +43,36 @@ class EdificioViewSet(ReadOnlyCatalogViewSet):
     search_fields = ["nombre", "codigo"]
     pagination_class = None
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        from collections import defaultdict
+        carreras_map = defaultdict(list)
+        rows = (
+            AliasLugarCarrera.objects.filter(
+                activo=True,
+                lugar__publicado=True,
+                lugar__piso__edificio__publicado=True,
+            )
+            .values_list("lugar__piso__edificio_id", "carrera__nombre")
+            .distinct()
+            .order_by("carrera__nombre")
+        )
+        for edificio_id, carrera_nombre in rows:
+            if carrera_nombre not in carreras_map[edificio_id]:
+                carreras_map[edificio_id].append(carrera_nombre)
+        context["carreras_por_edificio"] = carreras_map
+        return context
+
     @action(detail=False, methods=["get"])
     def mapa(self, request):
         edificios = self.get_queryset()
         lugares = published_places()
+        context = self.get_serializer_context()
         edificios_data = EdificioSerializer(
-            edificios, many=True, context={"request": request}
+            edificios, many=True, context=context
         ).data
         lugares_data = LugarSerializer(
-            lugares, many=True, context={"request": request}
+            lugares, many=True, context=context
         ).data
         return Response({
             "edificios": edificios_data,
