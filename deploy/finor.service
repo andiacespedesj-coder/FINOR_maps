@@ -9,7 +9,7 @@ User=finor
 Group=finor
 WorkingDirectory=/opt/finor-maps
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/opt/finor-maps/.venv/bin/gunicorn FINOR_maps.wsgi:application --bind 127.0.0.1:8000 --workers 2 --access-logfile - --error-logfile -
+ExecStart=/opt/finor-maps/.venv/bin/gunicorn FINOR_maps.wsgi:application --bind 127.0.0.1:8000 --workers 3 --threads 3 --max-requests 1000 --max-requests-jitter 100 --access-logfile - --error-logfile -
 Restart=on-failure
 RestartSec=5
 

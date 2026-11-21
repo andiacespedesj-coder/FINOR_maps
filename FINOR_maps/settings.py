@@ -111,6 +111,8 @@ DATABASES = {
         'PASSWORD': os.environ.get('DB_PASSWORD'),
         'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '5432'),
+        # Reutilización de conexiones para soportar múltiples usuarios sin agotar sockets
+        'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '600' if not DEBUG else '0')),
     }
 }
 
@@ -183,10 +185,16 @@ import platform
 if platform.system() == 'Windows':
     import os
     # Añadimos el directorio a las variables de entorno para que Python 3.8+ encuentre las dependencias de GDAL
-    os.add_dll_directory(r'C:\Users\andia\AppData\Local\Programs\OSGeo4W\bin')
+    osgeo4w_bin = os.path.join(os.environ.get('OSGEO4W_DIR', r'C:\Users\andia\AppData\Local\Programs\OSGeo4W'), 'bin')
+    if os.path.exists(osgeo4w_bin):
+        os.add_dll_directory(osgeo4w_bin)
     
-    GEOS_LIBRARY_PATH = r'C:\Users\andia\AppData\Local\Programs\OSGeo4W\bin\geos_c.dll'
-    GDAL_LIBRARY_PATH = r'C:\Users\andia\AppData\Local\Programs\OSGeo4W\bin\gdal313.dll'
+    geos_candidate = os.path.join(osgeo4w_bin, 'geos_c.dll')
+    if os.path.exists(geos_candidate):
+        GEOS_LIBRARY_PATH = geos_candidate
+    gdal_candidate = os.path.join(osgeo4w_bin, 'gdal313.dll')
+    if os.path.exists(gdal_candidate):
+        GDAL_LIBRARY_PATH = gdal_candidate
 
 
 LEAFLET_CONFIG = {
