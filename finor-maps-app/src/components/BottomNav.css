@@ -22,13 +22,21 @@
   font-size: .73rem;
   font-weight: 600;
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color .18s ease;
 }
 
-.nav-icon { display: grid; width: 64px; height: 32px; place-items: center; border-radius: 999px; transition: background .22s ease, transform .25s var(--finor-motion); }
+.nav-icon {
+  display: grid;
+  width: 64px;
+  height: 32px;
+  place-items: center;
+  border-radius: 999px;
+  transition: background-color .18s ease;
+}
 .nav-item.active { color: #173d60; }
 .nav-item.active .nav-icon { background: #d6e8ff; }
-.nav-item.active svg { stroke-width: 2.5; }
-.nav-item:active .nav-icon { transform: scale(.94); }
+.nav-item.active svg { stroke-width: 2.3; }
 
 .nav-item:focus-visible { outline: 2px solid var(--finor-blue); outline-offset: -3px; }
 @media (prefers-reduced-motion: reduce) { .nav-icon { transition: none; } }

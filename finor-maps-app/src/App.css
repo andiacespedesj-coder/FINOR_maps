@@ -17,3 +17,12 @@
   overflow-x: hidden;
   position: relative;
 }
+
+.content-area > * {
+  animation: screen-fade-in .15s ease-out both;
+}
+
+@keyframes screen-fade-in {
+  from { opacity: .88; }
+  to { opacity: 1; }
+}

@@ -88,6 +88,7 @@
   background: #fff;
   color: var(--finor-navy);
   box-shadow: 0 2px 8px rgba(11, 58, 112, .17);
+  transition: bottom .28s var(--finor-motion);
 }
 .floating-gps-btn.active { color: var(--finor-blue); }
 .floating-gps-btn:disabled { opacity: .65; }
@@ -133,6 +134,11 @@
   border-radius: 14px 14px 0 0;
   background: #fff;
   box-shadow: 0 -3px 12px rgba(11, 58, 112, .14);
+  animation: sheet-slide-up .26s var(--finor-motion) both;
+}
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); opacity: .4; }
+  to { transform: translateY(0); opacity: 1; }
 }
 .sheet-grip { width: 36px; height: 4px; margin: 0 auto 12px; border-radius: 99px; background: #bdcbd8; }
 .sheet-close { position: absolute; top: 11px; right: 10px; display: grid; width: 48px; height: 48px; place-items: center; border: 0; border-radius: 50%; background: #edf3f8; color: #37536d; }
