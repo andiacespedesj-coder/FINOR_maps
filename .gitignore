@@ -45,6 +45,7 @@ finor-maps-app/android/app/src/main/assets/capacitor.plugins.json
 .DS_Store
 Thumbs.db
 *.log
+*.tar.gz
 scratch/
 media/
 tmp/
