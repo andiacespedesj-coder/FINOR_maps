@@ -80,10 +80,15 @@ class NodoNavegacionAdmin(LeafletGeoAdmin):
         "DEFAULT_ZOOM": 19,
         "SPATIAL_EXTENT": (-63.2720, -17.3410, -63.2650, -17.3350),
     }
-    list_display = ("nombre", "tipo", "edificio", "piso", "lugar", "campus")
+    list_display = ("nombre_agrupado", "tipo", "edificio", "piso", "lugar", "campus")
     list_filter = ("edificio", "campus", "tipo", "piso")
     search_fields = ("nombre", "lugar__nombre", "edificio__nombre")
+    ordering = ("edificio__nombre", "piso__nivel", "nombre")
     list_select_related = ("edificio", "piso__edificio", "lugar", "campus")
+
+    @admin.display(description="Nodo (Ubicación · Nombre)", ordering="nombre")
+    def nombre_agrupado(self, obj):
+        return str(obj)
     fieldsets = (
         ("Punto de la ruta", {"fields": ("campus", "nombre", "tipo", "accesible")}),
         ("Relación con el edificio y el destino", {
