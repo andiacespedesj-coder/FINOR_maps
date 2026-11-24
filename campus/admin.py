@@ -80,14 +80,15 @@ class NodoNavegacionAdmin(LeafletGeoAdmin):
         "DEFAULT_ZOOM": 19,
         "SPATIAL_EXTENT": (-63.2720, -17.3410, -63.2650, -17.3350),
     }
-    list_display = ("nombre", "tipo", "campus", "piso", "lugar")
-    list_filter = ("campus", "tipo", "piso__edificio")
-    search_fields = ("nombre", "lugar__nombre")
+    list_display = ("nombre", "tipo", "edificio", "piso", "lugar", "campus")
+    list_filter = ("edificio", "campus", "tipo", "piso")
+    search_fields = ("nombre", "lugar__nombre", "edificio__nombre")
+    list_select_related = ("edificio", "piso__edificio", "lugar", "campus")
     fieldsets = (
         ("Punto de la ruta", {"fields": ("campus", "nombre", "tipo", "accesible")}),
         ("Relación con el edificio y el destino", {
-            "fields": ("piso", "lugar"),
-            "description": "Selecciona el piso si el punto está dentro de un edificio. Usa Lugar solo cuando este nodo corresponde a un destino concreto, por ejemplo la puerta de un aula. Para una entrada o cruce general, déjalo vacío.",
+            "fields": ("edificio", "piso", "lugar"),
+            "description": "Selecciona el edificio o módulo al que pertenece el punto (ej. Módulo 1, Módulo 2, Cancha, Estadio). Si seleccionas un piso, el edificio se completará solo. Usa Lugar solo cuando este nodo corresponde a un destino concreto (ej. puerta de aula).",
         }),
         ("Punto en el mapa exterior", {
             "fields": ("geometria_exterior",),
@@ -103,10 +104,26 @@ class NodoNavegacionAdmin(LeafletGeoAdmin):
 @admin.register(ConexionNavegacion)
 class ConexionNavegacionAdmin(admin.ModelAdmin):
     list_display = ("nodo_origen", "nodo_destino", "tipo", "distancia_metros", "bidireccional")
-    list_filter = ("tipo", "bidireccional", "accesible")
-    search_fields = ("nodo_origen__nombre", "nodo_destino__nombre")
+    list_filter = (
+        "tipo",
+        "bidireccional",
+        "nodo_origen__edificio",
+        "nodo_destino__edificio",
+        "accesible",
+    )
+    search_fields = (
+        "nodo_origen__nombre",
+        "nodo_destino__nombre",
+        "nodo_origen__edificio__nombre",
+        "nodo_destino__edificio__nombre",
+    )
     autocomplete_fields = ("nodo_origen", "nodo_destino")
-    list_select_related = ("nodo_origen", "nodo_destino")
+    list_select_related = (
+        "nodo_origen__edificio",
+        "nodo_origen__piso__edificio",
+        "nodo_destino__edificio",
+        "nodo_destino__piso__edificio",
+    )
 
 
 class FlechaFotoRutaInline(admin.TabularInline):

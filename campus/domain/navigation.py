@@ -2,12 +2,17 @@ from django.contrib.gis.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 
-from .catalog import Campus, Lugar, Piso
+from .catalog import Campus, Edificio, Lugar, Piso
 
 
 class NodoNavegacion(models.Model):
     TIPO_CHOICES = [("ENTRADA", "Entrada"), ("SALIDA", "Salida"), ("PASILLO", "Pasillo"), ("GRADA", "Grada"), ("ASCENSOR", "Ascensor"), ("REFERENCIA", "Punto de referencia")]
     campus = models.ForeignKey(Campus, on_delete=models.CASCADE, related_name="nodos_navegacion")
+    edificio = models.ForeignKey(
+        Edificio, on_delete=models.SET_NULL, related_name="nodos_navegacion",
+        null=True, blank=True,
+        help_text="Edificio o módulo al que pertenece el punto. Si seleccionas un piso, se completará automáticamente.",
+    )
     piso = models.ForeignKey(Piso, on_delete=models.CASCADE, related_name="nodos_navegacion", null=True, blank=True)
     lugar = models.ForeignKey(Lugar, on_delete=models.SET_NULL, related_name="nodos_navegacion", null=True, blank=True)
     nombre = models.CharField(max_length=150)
@@ -22,7 +27,29 @@ class NodoNavegacion(models.Model):
         verbose_name_plural = "Nodos de navegación"
 
     def __str__(self):
+        if self.piso_id:
+            try:
+                return f"[{self.piso.edificio.nombre} · {self.piso.nombre}] {self.nombre}"
+            except Exception:
+                pass
+        if self.edificio_id:
+            try:
+                return f"[{self.edificio.nombre}] {self.nombre}"
+            except Exception:
+                pass
         return self.nombre
+
+    def clean(self):
+        super().clean()
+        if self.piso and not self.edificio:
+            self.edificio = self.piso.edificio
+        if self.piso and self.edificio and self.piso.edificio_id != self.edificio_id:
+            raise ValidationError({"piso": "El piso seleccionado pertenece a otro edificio."})
+
+    def save(self, *args, **kwargs):
+        if self.piso and not self.edificio:
+            self.edificio = self.piso.edificio
+        super().save(*args, **kwargs)
 
 
 class ConexionNavegacion(models.Model):

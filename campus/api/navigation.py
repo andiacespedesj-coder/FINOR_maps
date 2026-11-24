@@ -8,7 +8,7 @@ from .serializers.navigation import (
 
 
 class NodoNavegacionViewSet(ReadOnlyCatalogViewSet):
-    queryset = NodoNavegacion.objects.select_related("campus", "piso", "lugar").order_by("id")
+    queryset = NodoNavegacion.objects.select_related("campus", "edificio", "piso__edificio", "lugar").order_by("id")
     serializer_class = NodoNavegacionSerializer
 
 
